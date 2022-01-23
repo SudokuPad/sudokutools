@@ -1,3 +1,19 @@
+# Misc
+.cache
+
+# Cordova
+plugins
+platforms
+.gradle
+
+# Firebase
+.runtimeconfig.json
+credentials.json
+token.json
+
+# Mac
+.DS_Store
+
 # Logs
 logs
 *.log
