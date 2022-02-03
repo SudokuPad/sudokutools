@@ -1,0 +1,24 @@
+{
+  "name": "sudokutools",
+  "version": "0.0.1",
+  "description": "Collection of sudoku tools",
+  "type": "module",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SudokuPad/sudokutools.git"
+  },
+  "keywords": [
+    "sudoku",
+    "tools"
+  ],
+  "author": "Sven Neumann",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SudokuPad/sudokutools/issues"
+  },
+  "homepage": "https://github.com/SudokuPad/sudokutools#readme"
+}
