@@ -1,6 +1,9 @@
 const fsp = require('fs').promises;
 const PuzzleTools = require('../puzzletools_lib.js');
 const PuzzleZipper = require('../puzzlezipper_lib.js');
+const loadFPuzzle = require('../fpuzzlesdecoder.js');
+
+const decodeFPuzzles = fpuzzleData => PuzzleZipper.zip(JSON.stringify(loadFPuzzle.parseFPuzzle(fpuzzleData)));
 
 // Load puzzle data
 	const loadJson = async fn => JSON.parse(await fsp.readFile(fn, 'utf8'));
@@ -41,6 +44,15 @@ const PuzzleZipper = require('../puzzlezipper_lib.js');
 		let puzzleRules = await extractPuzzleRules(puzzleDbFn);
 		writePuzzleRulesFile(puzzleRules, rulesFn);
 	};
+	const loadFPuzzlesRules = async puzzleFn => {
+		let fpuzzles = await loadJson(puzzleFn);
+		return fpuzzles.map(([title, fpuzzleData, solution], id) => {
+			let puzzle = loadFPuzzle.parseFPuzzle(fpuzzleData);
+			let metaData = extractPuzzleMeta(puzzle);
+			let rules = (metaData.rules || []).join('\n');
+			return {id, rules};
+		});
+	};
 
 // Rules
 	const reRuleAntiKnight = (() => {
@@ -57,6 +69,7 @@ const PuzzleZipper = require('../puzzlezipper_lib.js');
 		let reMustNot = 'apart (must not|cannot) contain the same digit';
 
 		let phrases = [
+			`(standard )?anti-?knight (rules?|constraint)( appl(y|ies))?`,
 			`${reCells} ${reCannotAppear} ${reKnights} ${reApart}`,
 			`${reCells} ${reSeparated} ${reKnights} ${reCannotContain}`,
 			`${reCells} ${reThatAre} ${reKnights} ${reMustNot}`,
@@ -90,14 +103,13 @@ const PuzzleZipper = require('../puzzlezipper_lib.js');
 	const testRuleCheck = (checkRe, puzzles) => {
 		console.log('testRuleCheck:', puzzles.length);
 		puzzles.forEach(({id, rules}) => {
-			console.log('  %s', id);
 			let text = rules.replace(/\n/g, ' ');
 			let m = text.match(checkRe);
 			if(m !== null) {
-				console.log('    pass: "%s"', m[0]);
+				console.log('    [%s] pass: "%s"', id, m[0]);
 			}
 			else {
-				console.log('\x1b[31m  FAIL: "%s"\x1b[0m', text);
+				console.log('[%s] \x1b[31m  FAIL: "%s"\x1b[0m', id, text);
 			}
 		});
 	};
@@ -117,10 +129,14 @@ const PuzzleZipper = require('../puzzlezipper_lib.js');
 	}
 
 (async () => {
-	let puzzleRules = await loadJson('./src/rulesparser/puzzlerules.json');
+	let puzzleRules = [
+		...await loadJson('./src/rulesparser/puzzlerules.json'),
+		...await loadFPuzzlesRules('./src/rulesparser/testfpuzzles.json')
+	];
 
 	console.log('Testing anti-knight rule:');
 	testAntiKnight(puzzleRules);
 	console.log('Testing anti-king rule:');
 	testAntiKing(puzzleRules);
+	
 })();
