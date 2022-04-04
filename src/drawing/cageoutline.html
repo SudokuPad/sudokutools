@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Sven Codes: Cage Outline</title>
+		<meta name="author" content="Sven Neumann, sven@svencodes.com">
+		<meta name="url" content="https://github.com/SudokuPad/sudokutools">
+		<meta name="description" content="Algorithm from app.crackingthecryptic.com v0.163.0 by Sven Neumann">
+		<style>
+			body { background-color: #333; }
+		</style>
+	</head>
+	<body>
+		<script>
+			function getCellOutline(cells, os) {
+				let edgePoints = [], grid = [], segs = [], shapes = [];
+				const checkRC = (r, c) => ((grid[r] !== undefined) && (grid[r][c] !== undefined)) || false;
+				const pointOS = {
+					tl: [os, os], tr: [os, 1-os],
+					bl: [1-os, os], br: [1-os, 1-os],
+					tc: [os, 0.5], rc: [0.5, 1-os],
+					bc: [1-os, 0.5], lc: [0.5, os],
+				};
+				const dirRC = {t: [-1, 0], r: [0, 1], b: [1, 0], l: [0, -1]};
+				const flipDir = {t: 'b', r: 'l', b: 't', l: 'r'};
+				const patterns = [
+					{name: 'otl', bits: '_0_011_1_', enter: 'bl', exit: 'rt', points: 'tl'},
+					{name: 'otr', bits: '_0_110_1_', enter: 'lt', exit: 'br', points: 'tr'},
+					{name: 'obr', bits: '_1_110_0_', enter: 'tr', exit: 'lb', points: 'br'},
+					{name: 'obl', bits: '_1_011_0_', enter: 'rb', exit: 'tl', points: 'bl'},
+					{name: 'itl', bits: '01_11____', enter: 'lt', exit: 'tl', points: 'tl'},
+					{name: 'itr', bits: '_10_11___', enter: 'tr', exit: 'rt', points: 'tr'},
+					{name: 'ibr', bits: '____11_10', enter: 'rb', exit: 'br', points: 'br'},
+					{name: 'ibl', bits: '___11_01_', enter: 'bl', exit: 'lb', points: 'bl'},
+					{name: 'et', bits: '_0_111___', enter: 'lt', exit: 'rt', points: 'tc'},
+					{name: 'er', bits: '_1__10_1_', enter: 'tr', exit: 'br', points: 'rc'},
+					{name: 'eb', bits: '___111_0_', enter: 'rb', exit: 'lb', points: 'bc'},
+					{name: 'el', bits: '_1_01__1_', enter: 'bl', exit: 'tl', points: 'lc'},
+					{name: 'out', bits: '_0_010_1_', enter: 'bl', exit: 'br', points: 'tl,tr'},
+					{name: 'our', bits: '_0_110_0_', enter: 'lt', exit: 'lb', points: 'tr,br'},
+					{name: 'oub', bits: '_1_010_0_', enter: 'tr', exit: 'tl', points: 'br,bl'},
+					{name: 'oul', bits: '_0_011_0_', enter: 'rb', exit: 'rt', points: 'bl,tl'},
+					{name: 'solo', bits: '_0_010_0_', enter: '', exit: '', points: 'tl,tr,br,bl'},
+				];
+				const checkPatterns = (row, col) => patterns
+					.filter(({name, bits}) => {
+						let matches = true;
+						bits.split('').forEach((b, i) => {
+							let r = row + Math.floor(i / 3) - 1, c = col + i % 3 - 1, check = checkRC(r, c);
+							matches = matches && ((b === '_') || (b === '1' && check) || (b === '0' && !check));
+						});
+						return matches;
+					});
+				const getSeg = (segs, rc, enter) => segs.find(([r, c, pat]) => r === rc[0] && c === rc[1] && pat.enter === enter);
+				const followShape = segs => {
+					let shape = [], seg = segs[0], nextSeg;
+					const getNext = ([r, c, pat]) => {
+						if(pat.exit === '') return;
+						let [exitDir, exitSide] = pat.exit.split('');
+						let nextRC = [r + dirRC[exitDir][0], c + dirRC[exitDir][1]];
+						let nextEnter = flipDir[exitDir] + exitSide;
+						return getSeg(segs, nextRC, nextEnter);
+					};
+					do {
+						shape.push(seg);
+						segs.splice(segs.indexOf(seg), 1);
+						seg = getNext(seg);
+					} while (seg !== undefined && shape.indexOf(seg) === -1);
+					return shape;
+				};
+				const shapeToPoints = shape => {
+					let points = [];
+					shape.forEach(([r, c, pat]) => pat.points
+						.split(',')
+						.map(point => pointOS[point])
+						.map(([ros, cos]) => [r + ros, c + cos])
+						.forEach(rc => points.push(rc))
+					);
+					return points;
+				};
+				cells.forEach(([r, c]) => (grid[r] = grid[r] || [])[c] = {});
+				cells.forEach(([r, c]) => checkPatterns(r, c).forEach(pat => segs.push([r, c,  pat])));
+				while(segs.length > 0) {
+					let shape = followShape(segs);
+					if(shape.length > 0) shapes.push(shape);
+				}
+				shapes.forEach(shape => {
+					edgePoints = edgePoints.concat(shapeToPoints(shape).map(([r, c], idx) => [idx === 0 ? 'M' : 'L', r, c]));
+					edgePoints.push(['Z']);
+				});
+				return edgePoints;
+			};
+
+
+			document.addEventListener('DOMContentLoaded', event => {
+				const pathScaler = scale => op => op.map(prop => typeof prop === 'number' ? prop * scale : prop);
+				let size, canvas, ctx, svg;
+				console.clear();
+				size = 400;
+				
+				// Setup canvas
+					canvas = Object.assign(document.createElement('canvas'), {width: size, height: size});
+					canvas.setAttribute('style', `display: block; float: left; width: ${size}px; height: ${size}px; border: 1px solid black`);
+					ctx = canvas.getContext('2d');
+					ctx.fillStyle = '#000';
+					ctx.strokeStyle = '#f0f';
+					ctx.lineWidth = 3;
+					document.body.appendChild(canvas);
+				
+				// Setup svg
+					svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+					svg.setAttribute('style', `display: block; float: left; width: ${size}px; height: ${size}px; border: 1px solid black`);
+					document.body.appendChild(svg);
+					let path = document.createElementNS(svg.namespaceURI, 'path');
+					Object.entries({stroke: '#f0f', 'stroke-width': 3})
+						.forEach(([key, val]) => path.setAttribute(key, val));
+					svg.appendChild(path);
+				
+				let cellsInCage = [[1, 3], [2, 1], [2, 2], [2, 3], [3, 2]];
+				let outlineData = getCellOutline(cellsInCage, -0.3);
+				
+				// Draw canvas
+					ctx.beginPath();
+					outlineData
+						.map(pathScaler(50))
+						.forEach(([p, x, y]) => {
+							switch(p) {
+								case 'M': ctx.moveTo(x, y); break;
+								case 'L': ctx.lineTo(x, y); break;
+								case 'Z': ctx.closePath(); break;
+							}
+						});
+					ctx.fill();
+					ctx.stroke();
+				
+				// Draw svg
+					path.setAttribute('d', outlineData.map(pathScaler(50)).map(item => item.join(' ')).join(' '));
+			});
+		</script>
+	</body>
+</html>
