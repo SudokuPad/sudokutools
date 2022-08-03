@@ -78,13 +78,16 @@ const decodeFPuzzles = fpuzzleData => PuzzleZipper.zip(JSON.stringify(parseFPuzz
 	const reRuleAntiKing = reRuleAntiChess(reKings);
 
 // Testing
-	const testRuleCheck = (checkRe, puzzles) => {
-		console.log('testRuleCheck:', puzzles.length);
-		puzzles.forEach(({id, rules}) => {
+	const testRuleCheck = (checkRe, puzzles, expected) => {
+		console.log('testRuleCheck:', puzzles.length, expected);
+		puzzles.forEach(({id, rules}, idx) => {
 			let text = rules.replace(/\n/g, ' ');
 			let m = text.match(checkRe);
-			if(m !== null) {
-				console.log('    [%s] pass: "%s"', id, m[0]);
+			let ruleMatch = m !== null;
+			if(ruleMatch === expected[idx]) {
+				if(ruleMatch) {
+					console.log('  [%s] \x1b[32mPASS\x1b[0m expected: %s', id, ruleMatch, ruleMatch ? ` match: ${JSON.stringify(m[0])}` : '');
+				}
 			}
 			else {
 				console.log('[%s] \x1b[31m  FAIL: "%s"\x1b[0m', id, text);
@@ -95,8 +98,9 @@ const decodeFPuzzles = fpuzzleData => PuzzleZipper.zip(JSON.stringify(parseFPuzz
 		const excludedIds = ['DLFMNqR3H9', 'FjNPfrp29T', 'MF3rQB3Tgr', 'jGj4Gf36nb'];
 		testRuleCheck(
 			reRuleAntiKnight,
-			puzzleRules.filter(({id, rules, fpuzzle}) => {
-				let isAntiKnight = (fpuzzle && fpuzzle.antiknight) || rules.match(/knight/im);
+			puzzleRules,
+			puzzleRules.map(({id, rules, fpuzzle}) => {
+				let isAntiKnight = (fpuzzle && fpuzzle.antiknight) || (rules.match(/knight/im) !== null);
 				return isAntiKnight && !excludedIds.includes(id);
 			})
 		);
@@ -105,8 +109,9 @@ const decodeFPuzzles = fpuzzleData => PuzzleZipper.zip(JSON.stringify(parseFPuzz
 		const excludedIds = ['6nb6Ndf63L', 'ndM7Hr7PQm'];
 		testRuleCheck(
 			reRuleAntiKing,
-			puzzleRules.filter(({id, rules, fpuzzle}) => {
-				let isAntiKing = (fpuzzle && fpuzzle.antiking) || rules.match(/[\s\-]king(\s|\')/im);
+			puzzleRules,
+			puzzleRules.map(({id, rules, fpuzzle}) => {
+				let isAntiKing = (fpuzzle && fpuzzle.antiking) || (rules.match(/[\s\-]king(\s|\')/im) !== null);
 				return isAntiKing && !excludedIds.includes(id);
 			})
 		);
