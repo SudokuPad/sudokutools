@@ -1,173 +1,14 @@
-
-const md5Digest = ((data) => {
-	function md5cycle(x, k) {
-		var a = x[0], b = x[1], c = x[2], d = x[3];
-
-		a = ff(a, b, c, d, k[0], 7, -680876936);
-		d = ff(d, a, b, c, k[1], 12, -389564586);
-		c = ff(c, d, a, b, k[2], 17,  606105819);
-		b = ff(b, c, d, a, k[3], 22, -1044525330);
-		a = ff(a, b, c, d, k[4], 7, -176418897);
-		d = ff(d, a, b, c, k[5], 12,  1200080426);
-		c = ff(c, d, a, b, k[6], 17, -1473231341);
-		b = ff(b, c, d, a, k[7], 22, -45705983);
-		a = ff(a, b, c, d, k[8], 7,  1770035416);
-		d = ff(d, a, b, c, k[9], 12, -1958414417);
-		c = ff(c, d, a, b, k[10], 17, -42063);
-		b = ff(b, c, d, a, k[11], 22, -1990404162);
-		a = ff(a, b, c, d, k[12], 7,  1804603682);
-		d = ff(d, a, b, c, k[13], 12, -40341101);
-		c = ff(c, d, a, b, k[14], 17, -1502002290);
-		b = ff(b, c, d, a, k[15], 22,  1236535329);
-
-		a = gg(a, b, c, d, k[1], 5, -165796510);
-		d = gg(d, a, b, c, k[6], 9, -1069501632);
-		c = gg(c, d, a, b, k[11], 14,  643717713);
-		b = gg(b, c, d, a, k[0], 20, -373897302);
-		a = gg(a, b, c, d, k[5], 5, -701558691);
-		d = gg(d, a, b, c, k[10], 9,  38016083);
-		c = gg(c, d, a, b, k[15], 14, -660478335);
-		b = gg(b, c, d, a, k[4], 20, -405537848);
-		a = gg(a, b, c, d, k[9], 5,  568446438);
-		d = gg(d, a, b, c, k[14], 9, -1019803690);
-		c = gg(c, d, a, b, k[3], 14, -187363961);
-		b = gg(b, c, d, a, k[8], 20,  1163531501);
-		a = gg(a, b, c, d, k[13], 5, -1444681467);
-		d = gg(d, a, b, c, k[2], 9, -51403784);
-		c = gg(c, d, a, b, k[7], 14,  1735328473);
-		b = gg(b, c, d, a, k[12], 20, -1926607734);
-
-		a = hh(a, b, c, d, k[5], 4, -378558);
-		d = hh(d, a, b, c, k[8], 11, -2022574463);
-		c = hh(c, d, a, b, k[11], 16,  1839030562);
-		b = hh(b, c, d, a, k[14], 23, -35309556);
-		a = hh(a, b, c, d, k[1], 4, -1530992060);
-		d = hh(d, a, b, c, k[4], 11,  1272893353);
-		c = hh(c, d, a, b, k[7], 16, -155497632);
-		b = hh(b, c, d, a, k[10], 23, -1094730640);
-		a = hh(a, b, c, d, k[13], 4,  681279174);
-		d = hh(d, a, b, c, k[0], 11, -358537222);
-		c = hh(c, d, a, b, k[3], 16, -722521979);
-		b = hh(b, c, d, a, k[6], 23,  76029189);
-		a = hh(a, b, c, d, k[9], 4, -640364487);
-		d = hh(d, a, b, c, k[12], 11, -421815835);
-		c = hh(c, d, a, b, k[15], 16,  530742520);
-		b = hh(b, c, d, a, k[2], 23, -995338651);
-
-		a = ii(a, b, c, d, k[0], 6, -198630844);
-		d = ii(d, a, b, c, k[7], 10,  1126891415);
-		c = ii(c, d, a, b, k[14], 15, -1416354905);
-		b = ii(b, c, d, a, k[5], 21, -57434055);
-		a = ii(a, b, c, d, k[12], 6,  1700485571);
-		d = ii(d, a, b, c, k[3], 10, -1894986606);
-		c = ii(c, d, a, b, k[10], 15, -1051523);
-		b = ii(b, c, d, a, k[1], 21, -2054922799);
-		a = ii(a, b, c, d, k[8], 6,  1873313359);
-		d = ii(d, a, b, c, k[15], 10, -30611744);
-		c = ii(c, d, a, b, k[6], 15, -1560198380);
-		b = ii(b, c, d, a, k[13], 21,  1309151649);
-		a = ii(a, b, c, d, k[4], 6, -145523070);
-		d = ii(d, a, b, c, k[11], 10, -1120210379);
-		c = ii(c, d, a, b, k[2], 15,  718787259);
-		b = ii(b, c, d, a, k[9], 21, -343485551);
-
-		x[0] = add32(a, x[0]);
-		x[1] = add32(b, x[1]);
-		x[2] = add32(c, x[2]);
-		x[3] = add32(d, x[3]);
-	}
-	function cmn(q, a, b, x, s, t) {
-		a = add32(add32(a, q), add32(x, t));
-		return add32((a << s) | (a >>> (32 - s)), b);
-	}
-	function ff(a, b, c, d, x, s, t) {
-		return cmn((b & c) | ((~b) & d), a, b, x, s, t);
-	}
-	function gg(a, b, c, d, x, s, t) {
-		return cmn((b & d) | (c & (~d)), a, b, x, s, t);
-	}
-	function hh(a, b, c, d, x, s, t) {
-		return cmn(b ^ c ^ d, a, b, x, s, t);
-	}
-	function ii(a, b, c, d, x, s, t) {
-		return cmn(c ^ (b | (~d)), a, b, x, s, t);
-	}
-	function md51(s) {
-		txt = '';
-		var n = s.length,
-		state = [1732584193, -271733879, -1732584194, 271733878], i;
-		for (i=64; i<=s.length; i+=64) {
-		md5cycle(state, md5blk(s.substring(i-64, i)));
-		}
-		s = s.substring(i-64);
-		var tail = [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0];
-		for (i=0; i<s.length; i++)
-		tail[i>>2] |= s.charCodeAt(i) << ((i%4) << 3);
-		tail[i>>2] |= 0x80 << ((i%4) << 3);
-		if (i > 55) {
-		md5cycle(state, tail);
-		for (i=0; i<16; i++) tail[i] = 0;
-		}
-		tail[14] = n*8;
-		md5cycle(state, tail);
-		return state;
-	}
-	function md5blk(s) {
-		var md5blks = [], i;
-		for (i=0; i<64; i+=4) {
-		md5blks[i>>2] = s.charCodeAt(i)
-		+ (s.charCodeAt(i+1) << 8)
-		+ (s.charCodeAt(i+2) << 16)
-		+ (s.charCodeAt(i+3) << 24);
-		}
-		return md5blks;
-	}
-	var hex_chr = '0123456789abcdef'.split('');
-	function rhex(n) {
-		var s='', j=0;
-		for(; j<4; j++)
-		s += hex_chr[(n >> (j * 8 + 4)) & 0x0F]
-		+ hex_chr[(n >> (j * 8)) & 0x0F];
-		return s;
-	}
-	function hex(x) {
-		for (var i=0; i<x.length; i++)
-		x[i] = rhex(x[i]);
-		return x.join('');
-	}
-	function md5(s) {
-		return hex(md51(s));
-	}
-	function add32(a, b) {
-		return (a + b) & 0xFFFFFFFF;
-	}
-	if(md5('hello') != '5d41402abc4b2a76b9719d911017c592') {
-		function add32(x, y) {
-			var lsw = (x & 0xFFFF) + (y & 0xFFFF),
-			msw = (x >> 16) + (y >> 16) + (lsw >> 16);
-			return (msw << 16) | (lsw & 0xFFFF);
-		}
-	}
-	return md5;
-})();
-
+/*
+Unsupported:
+*/
 const loadFPuzzle = (() => {
 	const fpuzzlesTinyIdLength = 20;
-	const regionShapes = {
-		3: [1, 3],
-		4: [2, 2],
-		5: [1, 5],
-		6: [2, 3],
-		7: [1, 7],
-		8: [2, 4],
-		9: [3, 3],
-		10:[2, 5],
-		11:[1, 11],
-		12:[3, 4],
-		13:[1, 13],
-		14:[2, 7],
-		15:[3, 5],
-		16:[4, 4],
+	const getRegionShape = (size = 9) => {
+		let height = Math.sqrt(size);
+		if(Number.isInteger(height)) return [height, height];
+		height = Math.floor(height);
+		while(!Number.isInteger(size / height) && height > 1) height--;
+		return height > 0 ? [height, size / height] : [1, 1];
 	};
 	const highlightColours = '#a8a8a8a8,#000,#ffa0a0,#ffdf61,#feffaf,#b0ffb0,#61d060,#d0d0ff,#8180f0,#ff08ff,#ffd0d0'.split(',');
 	const littlekillerDirs = {
@@ -176,8 +17,8 @@ const loadFPuzzle = (() => {
 		DR: [1, 1],
 		DL: [1, -1],
 	};
-	const layerOrder = 'size,title,author,ruleset,clone,grid,disjointgroups,thermometer,killercage,arrow,difference,ratio,betweenline,quadruple,rectangle,text'.split(',');
-	const decompressPuzzle = data => {
+	const layerOrder = 'size,title,author,ruleset,clone,grid,disjointgroups,thermometer,killercage,arrow,difference,ratio,betweenline,lockout,quadruple,rectangle,circle,text,line,minimum,maximum'.split(',');
+	const base64Codec = (() => {
 		var f = String.fromCharCode;
 		var keyStrBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\\";
 		var baseReverseDic = {};
@@ -338,8 +179,213 @@ const loadFPuzzle = (() => {
 				}
 			}
 		}
-		return decompressFromBase64(data);
-	};
+		function compressToBase64(input){
+			if(input === null) return '';
+			var res = _compress(input, 6, function(index){return keyStrBase64.charAt(index);});
+			switch(res.length % 4){
+				default:
+				case 0: return res;
+				case 1: return res + '===';
+				case 2: return res + '==';
+				case 3: return res + '=';
+			}
+		}
+		function _compress(uncompressed, bitsPerChar, getCharFromInt){
+			if(uncompressed == null)
+				return "";
+			var i, value,
+				context_dictionary= {},
+				context_dictionaryToCreate= {},
+				context_c="",
+				context_wc="",
+				context_w="",
+				context_enlargeIn= 2,
+				context_dictSize= 3,
+				context_numBits= 2,
+				context_data=[],
+				context_data_val=0,
+				context_data_position=0,
+				ii;
+
+			for(ii = 0; ii < uncompressed.length; ii++){
+				context_c = uncompressed.charAt(ii);
+				if(!Object.prototype.hasOwnProperty.call(context_dictionary, context_c)){
+					context_dictionary[context_c] = context_dictSize++;
+					context_dictionaryToCreate[context_c] = true;
+				}
+
+				context_wc = context_w + context_c;
+				if(Object.prototype.hasOwnProperty.call(context_dictionary, context_wc))
+					context_w = context_wc;
+				else {
+					if(Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)){
+						if(context_w.charCodeAt(0) < 256){
+							for(i = 0; i < context_numBits; i++){
+								context_data_val = (context_data_val << 1);
+								if(context_data_position == bitsPerChar - 1){
+									context_data_position = 0;
+									context_data.push(getCharFromInt(context_data_val));
+									context_data_val = 0;
+								} else context_data_position++;
+							}
+							value = context_w.charCodeAt(0);
+							for(i = 0; i < 8; i++){
+								context_data_val = (context_data_val << 1) | (value & 1);
+								if(context_data_position == bitsPerChar - 1){
+									context_data_position = 0;
+									context_data.push(getCharFromInt(context_data_val));
+									context_data_val = 0;
+								} else context_data_position++;
+								value = value >> 1;
+							}
+						} else {
+							value = 1;
+							for(i = 0; i < context_numBits; i++){
+								context_data_val = (context_data_val << 1) | value;
+								if(context_data_position == bitsPerChar - 1){
+									context_data_position = 0;
+									context_data.push(getCharFromInt(context_data_val));
+									context_data_val = 0;
+								} else context_data_position++;
+								value = 0;
+							}
+							value = context_w.charCodeAt(0);
+							for(i = 0; i < 16; i++){
+								context_data_val = (context_data_val << 1) | (value & 1);
+								if(context_data_position == bitsPerChar - 1){
+									context_data_position = 0;
+									context_data.push(getCharFromInt(context_data_val));
+									context_data_val = 0;
+								} else context_data_position++;
+								value = value >> 1;
+							}
+						}
+						context_enlargeIn--;
+						if(context_enlargeIn == 0){
+							context_enlargeIn = Math.pow(2, context_numBits);
+							context_numBits++;
+						}
+						delete context_dictionaryToCreate[context_w];
+					} else {
+						value = context_dictionary[context_w];
+						for(i = 0; i < context_numBits; i++){
+							context_data_val = (context_data_val << 1) | (value & 1);
+							if(context_data_position == bitsPerChar - 1){
+								context_data_position = 0;
+								context_data.push(getCharFromInt(context_data_val));
+								context_data_val = 0;
+							} else context_data_position++;
+							value = value >> 1;
+						}
+
+
+					}
+					context_enlargeIn--;
+					if(context_enlargeIn == 0){
+						context_enlargeIn = Math.pow(2, context_numBits);
+						context_numBits++;
+					}
+					context_dictionary[context_wc] = context_dictSize++;
+					context_w = String(context_c);
+				}
+			}
+
+			if(context_w !== ""){
+				if(Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)){
+					if(context_w.charCodeAt(0) < 256){
+						for(i = 0; i < context_numBits; i++){
+							context_data_val = (context_data_val << 1);
+							if(context_data_position == bitsPerChar - 1){
+								context_data_position = 0;
+								context_data.push(getCharFromInt(context_data_val));
+								context_data_val = 0;
+							} else context_data_position++;
+						}
+						value = context_w.charCodeAt(0);
+						for(i = 0; i < 8; i++){
+							context_data_val = (context_data_val << 1) | (value & 1);
+							if(context_data_position == bitsPerChar - 1){
+								context_data_position = 0;
+								context_data.push(getCharFromInt(context_data_val));
+								context_data_val = 0;
+							} else context_data_position++;
+							value = value >> 1;
+						}
+					} else {
+						value = 1;
+						for(i = 0; i < context_numBits; i++) {
+							context_data_val = (context_data_val << 1) | value;
+							if(context_data_position == bitsPerChar - 1){
+								context_data_position = 0;
+								context_data.push(getCharFromInt(context_data_val));
+								context_data_val = 0;
+							} else context_data_position++;
+							value = 0;
+						}
+						value = context_w.charCodeAt(0);
+						for(i = 0; i < 16; i++){
+							context_data_val = (context_data_val << 1) | (value & 1);
+							if(context_data_position == bitsPerChar - 1){
+								context_data_position = 0;
+								context_data.push(getCharFromInt(context_data_val));
+								context_data_val = 0;
+							} else context_data_position++;
+							value = value >> 1;
+						}
+					}
+					context_enlargeIn--;
+					if(context_enlargeIn == 0){
+						context_enlargeIn = Math.pow(2, context_numBits);
+						context_numBits++;
+					}
+					delete context_dictionaryToCreate[context_w];
+				} else {
+					value = context_dictionary[context_w];
+					for(i = 0; i < context_numBits; i++){
+						context_data_val = (context_data_val << 1) | (value & 1);
+						if(context_data_position == bitsPerChar - 1){
+							context_data_position = 0;
+							context_data.push(getCharFromInt(context_data_val));
+							context_data_val = 0;
+						} else context_data_position++;
+						value = value >> 1;
+					}
+
+
+				}
+				context_enlargeIn--;
+				if(context_enlargeIn == 0){
+					context_enlargeIn = Math.pow(2, context_numBits);
+					context_numBits++;
+				}
+			}
+
+			value = 2;
+			for(i = 0; i < context_numBits; i++){
+				context_data_val = (context_data_val << 1) | (value & 1);
+				if(context_data_position == bitsPerChar - 1){
+					context_data_position = 0;
+					context_data.push(getCharFromInt(context_data_val));
+					context_data_val = 0;
+				} else context_data_position++;
+				value = value >> 1;
+			}
+
+			while(true){
+				context_data_val = (context_data_val << 1);
+				if(context_data_position == bitsPerChar - 1){
+					context_data.push(getCharFromInt(context_data_val));
+					break;
+				}
+				else context_data_position++;
+			}
+			return context_data.join('');
+		}
+		return {
+			decompress: decompressFromBase64,
+			compress: compressToBase64
+		};
+	})();
 	const puzzleAdd = (puzzle, feature, part) => {
 		if(puzzle[feature] === undefined) puzzle[feature] = [];
 		if(typeof part === 'object' && !Array.isArray(part)) {
@@ -349,25 +395,52 @@ const loadFPuzzle = (() => {
 	};
 	const createBlankPuzzle = (fpuzzle, puzzle) => {
 		puzzle = Object.assign(puzzle, {cellSize: 50, cells: [], regions: []});
-		let regRC = regionShapes[fpuzzle.size || 9];
+		let regRC = getRegionShape(fpuzzle.size || 9);
 		let regions = {};
+		const convRegion = (r, c, region) => {
+			if(region === null) return 'null';
+			if(region === undefined) return Math.floor(r / regRC[0]) * regRC[0] + Math.floor(c / regRC[1]);
+			return Number(region);
+		};
 		fpuzzle.grid.forEach((row, r) => {
 			let newRow = [];
 			puzzleAdd(puzzle, 'cells', newRow);
 			row.forEach((cell, c) => {
 				let newCell = {};
 				newRow.push(newCell);
-				let defaultRegion = Math.floor(r / regRC[0]) * regRC[0] + Math.floor(c / regRC[1]);
-				let region = defaultRegion;
-				if(cell.region !== undefined) region = Number(cell.region);
-				regions[region] = regions[region] || [];
-				regions[region].push([r, c]);
 				if(cell.given) newCell.value = cell.value;
 				if(cell.centerPencilMarks) newCell.centremarks = cell.centerPencilMarks;
 				if(cell.cornerPencilMarks) newCell.pencilMarks = cell.cornerPencilMarks;
+				let region = convRegion(r, c, cell.region);
+				if(regions[region] === undefined) regions[region] = [];
+				regions[region].push([r, c]);
 			});
 		});
+		if(regions['null'] !== undefined) { // Handle "null" region
+			puzzleAdd(puzzle, 'cages', {cells: regions['null'], unique: false, hidden: true});
+			delete regions['null'];
+		}
 		Object.keys(regions).forEach(region => puzzleAdd(puzzle, 'regions', regions[region]));
+	};
+	const reMetaTags = /^([^: ]+):\s*(.+)/m;
+	const reTransparentColor = /#([0-9a-f]{3}0|[0-9a-f]{6}00)/i;
+	const reAllBlankSolution = /^0*$/;
+	const isMetaData = cage => {
+		let noCells = (cage.cells || []).length === 0
+		let noColor = reTransparentColor.test(cage.fontC || '#0000') &&  reTransparentColor.test(cage.outlineC || '#0000');
+		let metaValue = reMetaTags.test(String(cage.value) || '');
+		return (noCells || noColor) && metaValue;
+	};
+	const parseMetaData = (fpuzzle, puzzle) => {
+		const metaData = {};
+		(fpuzzle.cage || []).forEach(cage => {
+			if(!isMetaData(cage)) return;
+			let [_, metaName, metaVal] = (String(cage.value || '').match(reMetaTags) || []);
+			if(metaData[metaName] === undefined) return metaData[metaName] = metaVal;
+			if(!Array.isArray(metaData[metaName])) metaData[metaName] = [metaData[metaName]];
+			metaData[metaName].push(metaVal);
+		});
+		if(Object.keys(metaData).length > 0) puzzle.metaData = metaData;
 	};
 	const fpuzzlesParseRC = rc => rc.match(/R([0-9]+)C([0-9]+)/).slice(1, 3).map(Number).map(n => n - 1);
 	const offsetRC = (or, oc) => ([r, c]) => [r + or, c + oc];
@@ -382,18 +455,34 @@ const loadFPuzzle = (() => {
 		return [min, max];
 	};
 	const getPartCenter = part => {
-		if(typeof part.cell === 'string') {
-			return offsetRC(0.5, 0.5)(fpuzzlesParseRC(part.cell));
+		const {cell, cells} = part;
+		if(typeof cell === 'string') {
+			return offsetRC(0.5, 0.5)(fpuzzlesParseRC(cell));
 		}
-		if(Array.isArray(part.cells) && part.cells.length > 0) {
-			let cells = part.cells.map(fpuzzlesParseRC).map(offsetRC(0.5, 0.5)), [min, max] = rcMinMax(cells);
-			return [0.5 * (min[0] + max[0]), 0.5 * (min[1] + max[1])];
+		if(Array.isArray(cells) && cells.length > 0) {
+			let [sr, sc] = cells.reduce(([r, c], rc) => offsetRC(r + 0.5, c + 0.5)(fpuzzlesParseRC(rc)), [0, 0]),
+					len = cells.length;
+			return [sr / len, sc / len];
 		}
 		throw new Error('Unable to calculate part center for: ' + JSON.stringify(part));
 	};
 	const fpuzzlesParseMeta = (from, to) => (fpuzzle, puzzle) => {
 		if(fpuzzle[from]) puzzleAdd(puzzle, 'cages', {value: `${to}: ${fpuzzle[from]}`});
 	};
+	const applyDefaultMeta = (fpuzzle, puzzle, metaName, metaDefaultFunc) => {
+		if(fpuzzle[metaName] === undefined && (typeof metaDefaultFunc === 'function')) {
+			let defaultVal = metaDefaultFunc(fpuzzle, puzzle);
+			if(defaultVal !== undefined) {
+				puzzle.cages = puzzle.cages || [];
+				if(puzzle.cages.find(cage => (cage.value || '').indexOf(`${metaName}: `) === 0) === undefined) {
+					puzzle.cages.push({value: `${metaName}: ${defaultVal}`});
+				}
+			}
+		}
+	};
+	const getDefaultTitle = (fpuzzle, puzzle) => 'Untitled';
+	const getDefaultAuthor = (fpuzzle, puzzle) => 'Unknown';
+	const getDefaultRules = (fpuzzle, puzzle) => 'No rules provided for this puzzle. Please check the related video or website for rules.';
 	const parse = {};
 	parse.size = (fpuzzle, puzzle) => {};
 	parse.disabledlogic = (fpuzzle, puzzle) => {};
@@ -401,9 +490,12 @@ const loadFPuzzle = (() => {
 	parse.grid = (fpuzzle, puzzle) => {
 		fpuzzle.grid.forEach((row, r) => {
 			row.forEach((cell, c) => {
-				if(cell.c) {
-					let col = cell.c
-					if(highlightColours[parseInt(col)] !== undefined) col = highlightColours[parseInt(col)];
+				let col = cell.c || (cell.cArray || [])[0];
+				if(Array.isArray(cell.cArray) && cell.cArray.length > 1) {
+					console.warn('f-puzzles decoder does not currently support multiple given colors. Please submit this puzzle for testing.');
+				}
+				if(highlightColours[parseInt(col)] !== undefined) col = highlightColours[parseInt(col)];
+				if(![null, undefined].includes(col)) {
 					puzzleAdd(puzzle, 'underlays', {
 						backgroundColor: col,
 						center: [r + 0.5, c + 0.5],
@@ -418,6 +510,21 @@ const loadFPuzzle = (() => {
 	parse.title = fpuzzlesParseMeta('title', 'title');
 	parse.author = fpuzzlesParseMeta('author', 'author');
 	parse.ruleset = fpuzzlesParseMeta('ruleset', 'rules');
+	parse.isSolutionBlank = solString => reAllBlankSolution.test(solString);
+	parse.solution = (fpuzzle, puzzle) => {
+		let solution = fpuzzle.solution || [];
+		if(typeof solution === 'string') {
+			solution = solution.split(solution.indexOf(',') !== -1 ? ',' : '');
+			solution = solution.map(n => parseInt(n));
+		}
+		// FIXME: Handle multi-digit/letter solution strings
+		// TODO: Handle partial/gappy solution checking
+		let maxDigits = String(Math.max.apply(Math, solution)).length;
+		let solString = solution.map(n => String(n).padStart(maxDigits, '0')).join('');
+		if(!parse.isSolutionBlank(solString)) {
+			puzzleAdd(puzzle, 'cages', {value: `solution: ${solString}`});
+		}
+	};
 	parse.littlekillersum = (fpuzzle, puzzle) => {
 		(fpuzzle.littlekillersum || []).forEach(part => {
 			let rc = offsetRC(0.5, 0.5)(fpuzzlesParseRC(part.cell));
@@ -443,6 +550,13 @@ const loadFPuzzle = (() => {
 		});
 	};
 	parse.arrow = (fpuzzle, puzzle) => {
+		let customStyle = {};
+		try {
+			customStyle = JSON.parse((puzzle.metaData || {}).customstyle || '{}');
+		} catch (err) {
+			console.warn('Invalid JSON in imported meta data "customStyle":', (puzzle.metaData || {}).customstyle);
+		}
+		if(customStyle.bulb && customStyle.bulb.color) customStyle.bulb.borderColor = customStyle.bulb.color;
 		(fpuzzle.arrow || []).forEach(part => {
 			part.lines.forEach(line => {
 				if(line.length <= 1) console.error('Arrow has less than one point!');
@@ -450,34 +564,40 @@ const loadFPuzzle = (() => {
 				let dr = points[1][0] - points[0][0], dc = points[1][1] - points[0][1], dist = Math.sqrt(dr * dr + dc * dc);
 				points[0][0] += Math.round(10 * 0.3 * Math.sign(dr) / dist) / 10;
 				points[0][1] += Math.round(10 * 0.3 * Math.sign(dc) / dist) / 10;
-				puzzleAdd(puzzle, 'arrows', {
+				puzzleAdd(puzzle, 'arrows', Object.assign({
 					color: '#a1a1a1',
 					headLength: 0.3,
 					thickness: 5,
 					wayPoints: points
-				});
+				}, customStyle.arrow));
 			});
 			let cells = part.cells.map(fpuzzlesParseRC).map(offsetRC(0.5, 0.5)), [min, max] = rcMinMax(cells);
-			puzzleAdd(puzzle, 'overlays', {
+			puzzleAdd(puzzle, 'overlays', Object.assign({
 				borderColor: '#a1a1a1',
 				backgroundColor: '#ffffff',
 				center: getPartCenter(part),
 				fontSize: 16,
-				borderSize: 5,
+				thickness: 5,
 				rounded: true,
 				text: '',
 				width: 0.65 + (max[1] - min[1]), height: 0.65 + (max[0] - min[0]),
-			});
+			}, customStyle.bulb));
 		});
 	};
 	parse.killercage = (fpuzzle, puzzle) => {
-		(fpuzzle.killercage || []).forEach(cage => puzzleAdd(puzzle, 'cages', {value: cage.value, cells: cage.cells.map(fpuzzlesParseRC)}));
+		(fpuzzle.killercage || []).forEach(cage => puzzleAdd(puzzle, 'cages', {
+			cells: cage.cells.map(fpuzzlesParseRC),
+			value: cage.value,
+			unique: true
+		}));
 	};
 	parse['diagonal+'] = (fpuzzle, puzzle) => {
-		puzzleAdd(puzzle, 'lines', {color: '#34BBE6', thickness: 2, wayPoints: [[0, 9], [9, 0]]});
+		let cellHeight = puzzle.cells.length, cellWidth = puzzle.cells.reduce((acc, cur) => Math.max(cur.length, acc), 0);
+		puzzleAdd(puzzle, 'lines', {color: '#34BBE6', thickness: 2, wayPoints: [[0, cellWidth], [cellHeight, 0]]});
 	};
 	parse['diagonal-'] = (fpuzzle, puzzle) => {
-		puzzleAdd(puzzle, 'lines', {color: '#34BBE6', thickness: 2, wayPoints: [[0, 0], [9, 9]]});
+		let cellHeight = puzzle.cells.length, cellWidth = puzzle.cells.reduce((acc, cur) => Math.max(cur.length, acc), 0);
+		puzzleAdd(puzzle, 'lines', {color: '#34BBE6', thickness: 2, wayPoints: [[0, 0], [cellHeight, cellWidth]]});
 	};
 	parse.ratio = (fpuzzle, puzzle) => { // kropki
 		(fpuzzle.ratio || []).forEach(part => {
@@ -487,6 +607,7 @@ const loadFPuzzle = (() => {
 				center: getPartCenter(part),
 				rounded: true,
 				width: 0.3, height: 0.3,
+				text: ''
 			};
 			if(part.value) {
 				opts.color = '#fff';
@@ -504,6 +625,7 @@ const loadFPuzzle = (() => {
 				center: getPartCenter(part),
 				rounded: true,
 				width: 0.3, height: 0.3,
+				text: ''
 			};
 			if(part.value) {
 				opts.color = '#000';
@@ -662,29 +784,38 @@ const loadFPuzzle = (() => {
 			});
 		});
 	};
-	parse.minimum = (fpuzzle, puzzle) => {
-		(fpuzzle.minimum || []).forEach(part => {
+	parse.lockout = (fpuzzle, puzzle) => {};
+	parse.minMax = (puzzle, cells = [], inwards = true) => {
+		let minRC = [1, 1], maxRC = [puzzle.cells.length, puzzle.cells[0].length];
+		let a = inwards ? 0.44 : 0.39, b = inwards ? 0.39 : 0.44;
+		let otherRCs = cells.map(({cell}) => cell);
+		cells.forEach((part, idx, arr) => {
 			let center = getPartCenter(part);
-			[
-				[[-0.5, 0], [-0.3, 0]],
-				[[0, 0.5], [0, 0.3]],
-				[[0.5, 0], [0.3, 0]],
-				[[0, -0.5], [0, -0.3]],
-			]
-				.forEach(([[r1, c1],[r2, c2]]) => puzzleAdd(puzzle, 'arrows', {color: '#000000', thickness: 1, wayPoints: [[center[0] + r1, center[1] + c1], [center[0]  + r2, center[1] + c2]]}));
+			puzzleAdd(puzzle, 'underlays', {backgroundColor: '#ccc', center, rounded: false, width: 1, height: 1});
+			[[-1, 0], [0, 1], [1, 0], [0, -1]]
+				.forEach(([dy, dx]) => {
+					let neighbourRC = [Math.floor(center[0] + dy + 1), Math.floor(center[1] + dx + 1)];
+					if(
+						   (neighbourRC[0] < minRC[0]) || (neighbourRC[1] < minRC[1])
+						|| (neighbourRC[0] > maxRC[0]) || (neighbourRC[1] > maxRC[1])
+						|| otherRCs.indexOf(`R${neighbourRC[0]}C${neighbourRC[1]}`) !== -1) return;
+					puzzleAdd(puzzle, 'lines', {
+						color: '#000000',
+						thickness: 1,
+						wayPoints: [
+							[center[0] + dy * a + 0.1 * dx, center[1] + dx * a + 0.1 * dy],
+							[center[0] + dy * b, center[1] + dx * b],
+							[center[0] + dy * a - 0.1 * dx, center[1] + dx * a - 0.1 * dy],
+						]
+					});
+				});
 		});
 	};
+	parse.minimum = (fpuzzle, puzzle) => {
+		parse.minMax(puzzle, fpuzzle.minimum);
+	};
 	parse.maximum = (fpuzzle, puzzle) => {
-		(fpuzzle.maximum || []).forEach(part => {
-			let center = getPartCenter(part);
-			[
-				[[-0.3, 0], [-0.5, 0]],
-				[[0, 0.3], [0, 0.5]],
-				[[0.3, 0], [0.5, 0]],
-				[[0, -0.3], [0, -0.5]],
-			]
-				.forEach(([[r1, c1],[r2, c2]]) => puzzleAdd(puzzle, 'arrows', {color: '#000000', thickness: 1, wayPoints: [[center[0] + r1, center[1] + c1], [center[0]  + r2, center[1] + c2]]}));
-		});
+		parse.minMax(puzzle, fpuzzle.maximum, false);
 	};
 	parse.line = (fpuzzle, puzzle) => {
 		(fpuzzle.line || []).forEach(line => {
@@ -727,12 +858,12 @@ const loadFPuzzle = (() => {
 	};
 	parse.text = (fpuzzle, puzzle) => {
 		(fpuzzle.text || []).forEach(part => {
-			let text = part.value && part.value.replace(/ /g, '\u00A0');
+			let text = part.value && String(part.value).replace(/ /g, '\u00A0');
 			if(typeof text === 'string' && text.length > 0) {
 				puzzleAdd(puzzle, 'overlays', {
-					backgroundColor: '#FFFFFF',
-					borderColor: '#FFFFFF',
 					color: part.fontC,
+					textStroke: ['#fff', '#ffffff'].includes((part.fontC || '').toLowerCase())
+						? '#000' : '#fff',
 					center: getPartCenter(part),
 					fontSize: Math.round(32 * (part.size || 1)),
 					rounded: false,
@@ -744,21 +875,65 @@ const loadFPuzzle = (() => {
 		});
 	};
 	parse.cage = (fpuzzle, puzzle) => {
-		(fpuzzle.cage || []).forEach(cage => puzzleAdd(puzzle, 'cages', Object.assign({}, cage, {cells: cage.cells.map(fpuzzlesParseRC)})));
+		const reMetaCageValue = /^[a-z]+: /;
+		(fpuzzle.cage || []).forEach(cage => {
+			let cageOpts = Object.assign({}, cage, {cells: cage.cells.map(fpuzzlesParseRC)});
+			if(cageOpts.style === undefined) {
+				switch(cage.fromConstraint) {
+					case 'Row Indexer': cageOpts.style = 'fpRowIndexer'; break;
+					case 'Column Indexer': cageOpts.style = 'fpColumnIndexer'; break;
+					case 'Box Indexer': cageOpts.style = 'fpBoxIndexer'; break;
+				}
+			}
+			if(typeof cage.value === 'string' && cage.value.match(reMetaCageValue)) delete cageOpts.cells;
+			puzzleAdd(puzzle, 'cages', cageOpts);
+		});
 	};
+	const fixFPuzzleSlashes = data => {
+		const LIMIT = 3000;
+		let uriDecoded = decodeURIComponent(data), reSlash = /(\/)/g, segs = [], matches = [], pats = [];
+		let fixed, combs, pos, seg, bits, m;
+		if(uriDecoded.length < data.length) data = uriDecoded;
+		if(base64Codec.decompress(data) !== null) return data;
+		while((m = reSlash.exec(data)) !== null) matches.push(m.index);
+		matches.length = Math.min(16, matches.length); // Sane limit
+		combs = Math.pow(2, matches.length);
+		for(var i = 0; i < combs; i++) pats.push(i.toString(2).padStart(matches.length, '0'));
+		pats.sort((a, b) => a.replace(/0/g, '').length - b.replace(/0/g, '').length); // Sort by number of replacements
+		if(pats.length > LIMIT) pats.length = LIMIT;
+		for(var i = 0, len = pats.length; i < len; i++) {
+			pos = 0;
+			segs.length = 0;
+			bits = pats[i];
+			for(var i2 = 0, len2 = bits.length; i2 < len2; i2++) {
+				if(bits[i2] === '1') {
+					seg = data.slice(pos, matches[i2]);
+					segs.push(seg, '//');
+					pos += seg.length + 1;
+				}
+			}
+			segs.push(data.slice(pos, data.length));
+			fixed = segs.join('');
+			if(base64Codec.decompress(fixed) !== null) return fixed;
+		}
+		return null;
+	};
+	const saveDecodeURIComponent = (str, dec) => (dec = decodeURIComponent(str), dec.length < str.length ? dec : str);
 	const parseFPuzzle = fpuzzleRaw => {
-		let fpuzzle = fpuzzleRaw;
-		let uriDecoded = decodeURIComponent(fpuzzle);
-		if(uriDecoded.length < fpuzzle.length) fpuzzle = uriDecoded;
-		if(typeof fpuzzle === 'string') fpuzzle = JSON.parse(decompressPuzzle(fpuzzle));
+		let fpuzzle = saveDecodeURIComponent(fpuzzleRaw);
+		if(typeof fpuzzle === 'string') fpuzzle = JSON.parse(base64Codec.decompress(fpuzzle));
 		let puzzle = {id: `fpuzzle${md5Digest(fpuzzleRaw)}`};
 		createBlankPuzzle(fpuzzle, puzzle);
+		parseMetaData(fpuzzle, puzzle);
 		[...layerOrder, ...Object.keys(fpuzzle).filter(feature => !layerOrder.includes(feature))]
 			.filter(feature => fpuzzle[feature] !== undefined)
 			.forEach(feature => {
 				if(typeof parse[feature] !== 'function') return console.error('Unsupported feature:', feature, fpuzzle[feature]);
 				parse[feature](fpuzzle, puzzle);
 			});
+		applyDefaultMeta(fpuzzle, puzzle, 'title', loadPuzzle.getDefaultTitle);
+		applyDefaultMeta(fpuzzle, puzzle, 'author', loadPuzzle.getDefaultAuthor);
+		applyDefaultMeta(fpuzzle, puzzle, 'rules', loadPuzzle.getDefaultRules);
 		return puzzle;
 	};
 	const fetchRawId = rawId => rawId.length > fpuzzlesTinyIdLength
@@ -775,10 +950,43 @@ const loadFPuzzle = (() => {
 			return PuzzleZipper.zip(JSON.stringify(puzzle));
 		})
 		.catch(err => (console.error('Error fetching FPuzzle:', err), Promise.reject(err)));
+
+	const cleanPuzzlePackage = puzzlePackage => {
+		if(puzzlePackage.match(/^fpuzzles/)) {
+			try {
+				let fpuzzle = JSON.parse(loadFPuzzle.decompressPuzzle(saveDecodeURIComponent(puzzlePackage.replace(/^fpuzzles/, ''))));
+				// Remove cells from "customstyle" cages
+				(fpuzzle.cage || []).forEach(cage => {
+					if((cage.value || '').match(/^customstyle: /)) cage.cells.length = 0;
+				});
+				puzzlePackage = 'fpuzzles' + saveDecodeURIComponent(loadFPuzzle.compressPuzzle(JSON.stringify(fpuzzle)));
+			}
+			catch(err) {
+				console.error(err);
+			}
+		}
+		return puzzlePackage;
+	};
 	
+	const decodeFPuzzleData = fpuzzleData => JSON.parse(base64Codec.decompress(fixFPuzzleSlashes(saveDecodeURIComponent(fpuzzleData))));
+	const encodeFPuzzleData = fpuzzle => base64Codec.compress(JSON.stringify(fpuzzle));
+	const fpuzzleAddSolution = (fpuzzleData, solution) => encodeFPuzzleData(Object.assign(decodeFPuzzleData(fpuzzleData), {solution}));
+
+
 	loadPuzzle.fetchRawId = fetchRawId;
 	loadPuzzle.parseFPuzzle = parseFPuzzle;
-	loadPuzzle.decompressPuzzle = decompressPuzzle;
+	loadPuzzle.decompressPuzzle = base64Codec.decompress;
+	loadPuzzle.compressPuzzle = base64Codec.compress;
+	loadPuzzle.fixFPuzzleSlashes = fixFPuzzleSlashes;
+	loadPuzzle.saveDecodeURIComponent = saveDecodeURIComponent;
+	loadPuzzle.getRegionShape = getRegionShape;
+	loadPuzzle.getDefaultTitle = getDefaultTitle;
+	loadPuzzle.getDefaultAuthor = getDefaultAuthor;
+	loadPuzzle.getDefaultRules = getDefaultRules;
+	loadPuzzle.cleanPuzzlePackage = cleanPuzzlePackage;
+	loadPuzzle.decodeFPuzzleData = decodeFPuzzleData;
+	loadPuzzle.encodeFPuzzleData = encodeFPuzzleData;
+	loadPuzzle.fpuzzleAddSolution = fpuzzleAddSolution;
 	return loadPuzzle;
 })();
 
