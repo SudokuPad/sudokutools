@@ -417,4 +417,4 @@ const PuzzleTools = (() => {
 	return PT;
 })();
 
-if(module) module.exports = PuzzleTools;
+if(typeof module != 'undefined') module.exports = PuzzleTools;

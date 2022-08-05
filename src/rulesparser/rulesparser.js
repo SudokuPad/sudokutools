@@ -43,4 +43,4 @@ const RulesParser = (() => {
 	};
 })();
 
-if(module) module.exports = RulesParser;
+if(typeof module != 'undefined') module.exports = RulesParser;
