@@ -1,62 +1,6 @@
-const fsp = require('fs').promises;
-const PuzzleTools = require('../puzzletools_lib.js');
-const PuzzleZipper = require('../puzzlezipper_lib.js');
-global.md5Digest = require('../md5digest.js');
-const {decodeFPuzzleData, parseFPuzzle} = require('../fpuzzlesdecoder.js');
 
-const decodeFPuzzles = fpuzzleData => PuzzleZipper.zip(JSON.stringify(parseFPuzzle(fpuzzleData)));
-
-// Load puzzle data
-	const loadJson = async fn => JSON.parse(await fsp.readFile(fn, 'utf8'));
-	const puzzleDbUnzip = data => data === undefined ? data : JSON.parse(PuzzleZipper.unzip(data));
-	const puzzleDbGet = (puzzleDb, puzzleId) => puzzleDbUnzip(puzzleDb.find(({id}) => id === puzzleId).data);
-	const extractPuzzleMeta = function(puzzle = {}, tags = '[^: ]+') {
-			const reMetaTags = new RegExp(`^(${tags.replace(',', '|')}):\\s*([\\s\\S]+)`, 'm');
-			const metaData = puzzle.metaData || {};
-			(puzzle.cages || []).forEach(cage => {
-				if((cage.cells || []).length === 0) {
-					let [_, metaName, metaVal] = (String(cage.value || '').match(reMetaTags) || []);
-					if(metaName && metaVal) {
-						if(metaName === 'rules') {
-							metaData.rules = metaData.rules || [];
-							metaData.rules.push(metaVal);
-						}
-						else {
-							metaData[metaName] = metaVal;
-						}
-					}
-					return;
-				}
-			});
-			return metaData;
-		};
-	const puzzleDbExtractRules = puzzleDb => {
-		let puzzleRules = [];
-		puzzleDb.forEach(({id, data}) => {
-			let metaData = extractPuzzleMeta(puzzleDbUnzip(data));
-			let rules = (metaData.rules || []).join(' ');
-			if(rules.length > 0) puzzleRules.push({id, rules});
-		});
-		return puzzleRules;
-	};
-	const extractPuzzleRules = async puzzleDbFn => puzzleDbExtractRules(await loadJson(puzzleDbFn));
-	const writePuzzleRulesFile = async (puzzleRules, filename) => await fsp.writeFile(filename, `[\n${puzzleRules.map(row => JSON.stringify(row)).join(',\n')}\n]`, 'utf8');
-	const createPuzzleRulesFile = async (puzzleDbFn, rulesFn) => {
-		let puzzleRules = await extractPuzzleRules(puzzleDbFn);
-		writePuzzleRulesFile(puzzleRules, rulesFn);
-	};
-	const loadFPuzzlesRules = async puzzleFn => {
-		let fpuzzles = await loadJson(puzzleFn);
-		return fpuzzles.map(([title, fpuzzleData, solution], id) => {
-			let fpuzzle = decodeFPuzzleData(fpuzzleData);
-			let puzzle = parseFPuzzle(fpuzzleData);
-			let metaData = extractPuzzleMeta(puzzle);
-			let rules = (metaData.rules || []).join('\n');
-			return {id, rules, fpuzzle};
-		});
-	};
-
-// Rules
+const RulesParser = (() => {
+// Rules Helpers
 	const reCells = '((identical )?digits|(two )?cells)';
 	const reCannotAppear = 'cannot (be( either)?|appear)( within)?';
 	const reSeparated = 'separated by';
@@ -74,58 +18,29 @@ const decodeFPuzzles = fpuzzleData => PuzzleZipper.zip(JSON.stringify(parseFPuzz
 		`${reCells} ${reSeparated} ${reChessMove} ${reCannotContain}`,
 		`${reCells} ${reThatAre} ${reChessMove} ${reMustNot}`,
 	].join('|')})`, 'i');
+
+// Rules Checks
 	const reRuleAntiKnight = reRuleAntiChess(reKnights);
+	const isAntiKnight = rules => rules.replace(/\n/g, ' ').match(reRuleAntiKnight);
 	const reRuleAntiKing = reRuleAntiChess(reKings);
+	const isAntiKing = rules => rules.replace(/\n/g, ' ').match(reRuleAntiKing);
 
-// Testing
-	const testRuleCheck = (checkRe, puzzles, expected) => {
-		console.log('testRuleCheck:', puzzles.length, expected);
-		puzzles.forEach(({id, rules}, idx) => {
-			let text = rules.replace(/\n/g, ' ');
-			let m = text.match(checkRe);
-			let ruleMatch = m !== null;
-			if(ruleMatch === expected[idx]) {
-				if(ruleMatch) {
-					console.log('  [%s] \x1b[32mPASS\x1b[0m expected: %s', id, ruleMatch, ruleMatch ? ` match: ${JSON.stringify(m[0])}` : '');
-				}
-			}
-			else {
-				console.log('[%s] \x1b[31m  FAIL: "%s"\x1b[0m', id, text);
-			}
-		});
+	return {
+		reCells,
+		reCannotAppear,
+		reSeparated,
+		reThatAre,
+		reAnti,
+		reConstraint,
+		reApart,
+		reCannotContain,
+		reMustNot,
+		reKnights,
+		reKings,
+		reRuleAntiChess,
+		reRuleAntiKnight, isAntiKnight,
+		reRuleAntiKing, isAntiKing
 	};
-	const testAntiKnight = puzzleRules => {
-		const excludedIds = ['DLFMNqR3H9', 'FjNPfrp29T', 'MF3rQB3Tgr', 'jGj4Gf36nb'];
-		testRuleCheck(
-			reRuleAntiKnight,
-			puzzleRules,
-			puzzleRules.map(({id, rules, fpuzzle}) => {
-				let isAntiKnight = (fpuzzle && fpuzzle.antiknight) || (rules.match(/knight/im) !== null);
-				return isAntiKnight && !excludedIds.includes(id);
-			})
-		);
-	}
-	const testAntiKing = puzzleRules => {
-		const excludedIds = ['6nb6Ndf63L', 'ndM7Hr7PQm'];
-		testRuleCheck(
-			reRuleAntiKing,
-			puzzleRules,
-			puzzleRules.map(({id, rules, fpuzzle}) => {
-				let isAntiKing = (fpuzzle && fpuzzle.antiking) || (rules.match(/[\s\-]king(\s|\')/im) !== null);
-				return isAntiKing && !excludedIds.includes(id);
-			})
-		);
-	}
-
-(async () => {
-	let puzzleRules = [
-		...await loadJson('./src/rulesparser/puzzlerules.json'),
-		...await loadFPuzzlesRules('./src/rulesparser/testfpuzzles.json')
-	];
-
-	console.log('Testing anti-knight rule:');
-	testAntiKnight(puzzleRules);
-	console.log('Testing anti-king rule:');
-	testAntiKing(puzzleRules);
-	
 })();
+
+if(module) module.exports = RulesParser;

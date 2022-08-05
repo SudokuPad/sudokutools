@@ -6,7 +6,7 @@
   "main": "./src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test-rulesparser": "node ./src/rulesparser/rulesparser.js"
+    "test-rulesparser": "node ./src/rulesparser/testrulesparser.js"
   },
   "repository": {
     "type": "git",
