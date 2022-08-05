@@ -76,13 +76,13 @@ const {isAntiKnight, isAntiKing} = require('./rulesparser.js');
 // Tests
 	let tests = [
 		{label: 'anti-knight', checkFunc: isAntiKnight,
-			isExpected: ({id, rules = '', fpuzzle = {}}) =>
-				!['DLFMNqR3H9', 'FjNPfrp29T', 'MF3rQB3Tgr', 'jGj4Gf36nb'].includes(id)
+			isExpected: ({id, rules = '', fpuzzle = {}}) => true
+				&& !['DLFMNqR3H9', 'FjNPfrp29T', 'MF3rQB3Tgr', 'jGj4Gf36nb'].includes(id)
 				&& (fpuzzle.antiknight || (rules.match(/knight/im) !== null))
 		},
 		{label: 'anti-king', checkFunc: isAntiKing,
-			isExpected: ({id, rules = '', fpuzzle = {}}) =>
-				!['6nb6Ndf63L', 'ndM7Hr7PQm'].includes(id)
+			isExpected: ({id, rules = '', fpuzzle = {}}) => true
+				&& !['6nb6Ndf63L', 'ndM7Hr7PQm'].includes(id)
 				&& (fpuzzle.antiking || (rules.match(/[\s\-]king(\s|\')/im) !== null))
 		},
 	];
