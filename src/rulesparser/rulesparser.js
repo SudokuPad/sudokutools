@@ -1,28 +1,29 @@
 
 const RulesParser = (() => {
 // Rules Helpers
+	const reCannot = '(must not|cannot|can\'t)';
 	const reCells = '((identical )?digits|(two )?cells)';
-	const reCannotAppear = 'cannot (be( either)?|appear)( within)?';
+	const reCannotAppear = `${reCannot} (be( either)?|appear|repeat)( within| in cells)?`;
 	const reSeparated = 'separated by';
 	const reThatAre = 'that are';
 	const reAnti = '(standard )?anti-?';
 	const reConstraint = ' ?(rules?|constraint)?( appl(y|ies))?';
 	const reApart = '(apart|of each other|\\(touching each other diagonally\\))';
-	const reCannotContain = '(cannot|can\'t) (contain|have) the same (digit|value)';
-	const reMustNot = 'apart (must not|cannot) contain the same digit';
-	const reKnights = '(.+? or )?(a( chess)? )?knight(\'s)?( move)?( or .+?)?( \\(?in chess\\)?)?';
-	const reKings = '(.+? or )?(a( chess)? )?king(\'s)?( move)?( or .+?)?( \\(?in chess\\)?)?';
-	const reRuleAntiChess = reChessMove => new RegExp(`(${[
-		`${reAnti}${reChessMove}${reConstraint}`,
-		`${reCells} ${reCannotAppear} ${reChessMove} ${reApart}`,
-		`${reCells} ${reSeparated} ${reChessMove} ${reCannotContain}`,
-		`${reCells} ${reThatAre} ${reChessMove} ${reMustNot}`,
+	const reCannotContain = `${reCannot} (contain|have) the same (digit|value)`;
+	const reMustNot = `apart ${reCannot} contain the same digit`;
+	const reChess = '(.+? or )?(that are )?(a( chess)? )?';
+	const reSMove = '(\'?s)?( move)?( or .+?)?( \\(?in chess\\)?)?';
+	const reRuleAntiChess = move => new RegExp(`(${[
+		`${reAnti}${reChess}${move}${reSMove}${reConstraint}`,
+		`${reCells} ${reCannotAppear} ${reChess}${move}${reSMove} ${reApart}`,
+		`${reCells} ${reSeparated} ${reChess}${move}${reSMove} ${reCannotContain}`,
+		`${reCells} ${reThatAre} ${reChess}${move}${reSMove} ${reMustNot}`,
 	].join('|')})`, 'i');
 
 // Rules Checks
-	const reRuleAntiKnight = reRuleAntiChess(reKnights);
+	const reRuleAntiKnight = reRuleAntiChess('knight');
 	const isAntiKnight = rules => rules.replace(/\n/g, ' ').match(reRuleAntiKnight);
-	const reRuleAntiKing = reRuleAntiChess(reKings);
+	const reRuleAntiKing = reRuleAntiChess('king');
 	const isAntiKing = rules => rules.replace(/\n/g, ' ').match(reRuleAntiKing);
 
 	return {
@@ -35,8 +36,6 @@ const RulesParser = (() => {
 		reApart,
 		reCannotContain,
 		reMustNot,
-		reKnights,
-		reKings,
 		reRuleAntiChess,
 		reRuleAntiKnight, isAntiKnight,
 		reRuleAntiKing, isAntiKing
