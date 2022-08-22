@@ -40,7 +40,7 @@ const {isAntiKnight, isAntiKing} = require('./rulesparser.js');
 		return puzzleRules;
 	};
 	const extractPuzzleRules = async puzzleDbFn => puzzleDbExtractRules(await loadJson(puzzleDbFn));
-	const writePuzzleRulesFile = async (puzzleRules, filename) => await fsp.writeFile(filename, `[\n${puzzleRules.map(row => JSON.stringify(row)).join(',\n')}\n]`, 'utf8');
+	const writePuzzleRulesFile = async (puzzleRules, filename) => await fsp.writeFile(filename, `[\n ${puzzleRules.map(row => JSON.stringify(row)).join('\n,')}\n]`, 'utf8');
 	const createPuzzleRulesFile = async (puzzleDbFn, rulesFn) => {
 		let puzzleRules = await extractPuzzleRules(puzzleDbFn);
 		writePuzzleRulesFile(puzzleRules, rulesFn);
@@ -52,7 +52,10 @@ const {isAntiKnight, isAntiKing} = require('./rulesparser.js');
 			let puzzle = parseFPuzzle(fpuzzleData);
 			let metaData = extractPuzzleMeta(puzzle);
 			let rules = (metaData.rules || []).join('\n');
-			return {id, rules, fpuzzle};
+			let hasRule = [];
+			if(fpuzzle.antiknight) hasRule.push('antiknight');
+			if(fpuzzle.antiking) hasRule.push('antiking');
+			return {id, hasRule, rulestext: rules, fpuzzle};
 		});
 	};
 	//const decodeFPuzzles = fpuzzleData => PuzzleZipper.zip(JSON.stringify(parseFPuzzle(fpuzzleData)));
@@ -60,11 +63,11 @@ const {isAntiKnight, isAntiKing} = require('./rulesparser.js');
 // Testing
 	const testRuleCheck = (checkFunc, puzzles, expected) => {
 		let passed = 0;
-		puzzles.forEach(({id, rules}, idx) => {
-			let m = checkFunc(rules);
+		puzzles.forEach(({id, rulestext}, idx) => {
+			let m = checkFunc(rulestext);
 			let ruleMatch = m !== null;
 			if(ruleMatch !== expected[idx]) {
-				console.log('\x1b[31m  FAIL: "%s"\x1b[0m[%s] ', id, rules.replace(/\n/g, ' '));
+				console.log('\x1b[31m  FAIL: "%s"\x1b[0m[%s] ', id, rulestext.replace(/\n/g, ' '));
 				return;
 			}
 			passed++;
@@ -75,16 +78,8 @@ const {isAntiKnight, isAntiKing} = require('./rulesparser.js');
 
 // Tests
 	let tests = [
-		{label: 'anti-knight', checkFunc: isAntiKnight,
-			isExpected: ({id, rules = '', fpuzzle = {}}) => true
-				&& !['DLFMNqR3H9', 'FjNPfrp29T', 'MF3rQB3Tgr', 'jGj4Gf36nb'].includes(id)
-				&& (fpuzzle.antiknight || (rules.match(/knight/im) !== null))
-		},
-		{label: 'anti-king', checkFunc: isAntiKing,
-			isExpected: ({id, rules = '', fpuzzle = {}}) => true
-				&& !['6nb6Ndf63L', 'ndM7Hr7PQm'].includes(id)
-				&& (fpuzzle.antiking || (rules.match(/[\s\-]king(\s|\')/im) !== null))
-		},
+		{label: 'anti-knight', checkFunc: isAntiKnight, isExpected: ({hasRule = []}) => hasRule.includes('antiknight')},
+		{label: 'anti-king', checkFunc: isAntiKing, isExpected: ({hasRule = []}) => hasRule.includes('antiking')},
 	];
 
 (async () => {
