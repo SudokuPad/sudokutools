@@ -3,7 +3,7 @@ const PuzzleTools = require('../puzzletools_lib.js');
 const PuzzleZipper = require('../puzzlezipper_lib.js');
 global.md5Digest = require('../md5digest.js');
 const {decodeFPuzzleData, parseFPuzzle} = require('../fpuzzlesdecoder.js');
-const {isAntiKnight, isAntiKing} = require('./rulesparser.js');
+const {normalizeRules, isAntiKnight, isAntiKing, hasKillerCages} = require('./rulesparser.js');
 
 
 // Loading
@@ -47,7 +47,7 @@ const {isAntiKnight, isAntiKing} = require('./rulesparser.js');
 	};
 	const loadFPuzzlesRules = async puzzleFn => {
 		let fpuzzles = await loadJson(puzzleFn);
-		return fpuzzles.map(([title, fpuzzleData, solution], id) => {
+		return fpuzzles.map(([title, fpuzzleData, solution]) => {
 			let fpuzzle = decodeFPuzzleData(fpuzzleData);
 			let puzzle = parseFPuzzle(fpuzzleData);
 			let metaData = extractPuzzleMeta(puzzle);
@@ -55,7 +55,8 @@ const {isAntiKnight, isAntiKing} = require('./rulesparser.js');
 			let hasRule = [];
 			if(fpuzzle.antiknight) hasRule.push('antiknight');
 			if(fpuzzle.antiking) hasRule.push('antiking');
-			return {id, hasRule, rulestext: rules, fpuzzle};
+			if(Array.isArray(fpuzzle.killercage) && fpuzzle.killercage.length > 0) hasRule.push('killercages');
+			return {id: title, hasRule, rulestext: rules, fpuzzle};
 		});
 	};
 	//const decodeFPuzzles = fpuzzleData => PuzzleZipper.zip(JSON.stringify(parseFPuzzle(fpuzzleData)));
@@ -65,9 +66,9 @@ const {isAntiKnight, isAntiKing} = require('./rulesparser.js');
 		let passed = 0;
 		puzzles.forEach(({id, rulestext}, idx) => {
 			let m = checkFunc(rulestext);
-			let ruleMatch = m !== null;
+			let ruleMatch = m !== null && m !== false;
 			if(ruleMatch !== expected[idx]) {
-				console.log('\x1b[31m  FAIL: "%s"\x1b[0m[%s] ', id, rulestext.replace(/\n/g, ' '));
+				console.log('\x1b[31m  FAIL: "%s"\x1b[0m [%s] ', id, JSON.stringify((m || [])[0]));
 				return;
 			}
 			passed++;
@@ -80,6 +81,7 @@ const {isAntiKnight, isAntiKing} = require('./rulesparser.js');
 	let tests = [
 		{label: 'anti-knight', checkFunc: isAntiKnight, isExpected: ({hasRule = []}) => hasRule.includes('antiknight')},
 		{label: 'anti-king', checkFunc: isAntiKing, isExpected: ({hasRule = []}) => hasRule.includes('antiking')},
+		{label: 'killercages', checkFunc: hasKillerCages, isExpected: ({hasRule = []}) => hasRule.includes('killercages')},
 	];
 
 (async () => {
