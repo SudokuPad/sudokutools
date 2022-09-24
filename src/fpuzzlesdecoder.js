@@ -425,6 +425,18 @@ const loadFPuzzle = (() => {
 	const reMetaTags = /^([^: ]+):\s*(.+)/m;
 	const reTransparentColor = /#([0-9a-f]{3}0|[0-9a-f]{6}00)/i;
 	const reAllBlankSolution = /^0*$/;
+	const isIntStrict = str => Number.isInteger(Number(str)) && String(Number(str)) === String(str);
+	const puzzleAddMeta = (puzzle, key, val) => {
+		if(puzzle.metaData === undefined) puzzle.metaData = {};
+		let {metaData} = puzzle;
+		if(metaData[key] === undefined) {
+			metaData[key] = val;
+		}
+		else {
+			if(!Array.isArray(metaData[key])) metaData[key] = [metaData[key]];
+			metaData[key].push(val);
+		}
+	};
 	const isMetaData = cage => {
 		let noCells = (cage.cells || []).length === 0
 		let noColor = reTransparentColor.test(cage.fontC || '#0000') &&  reTransparentColor.test(cage.outlineC || '#0000');
@@ -432,15 +444,11 @@ const loadFPuzzle = (() => {
 		return (noCells || noColor) && metaValue;
 	};
 	const parseMetaData = (fpuzzle, puzzle) => {
-		const metaData = {};
 		(fpuzzle.cage || []).forEach(cage => {
 			if(!isMetaData(cage)) return;
 			let [_, metaName, metaVal] = (String(cage.value || '').match(reMetaTags) || []);
-			if(metaData[metaName] === undefined) return metaData[metaName] = metaVal;
-			if(!Array.isArray(metaData[metaName])) metaData[metaName] = [metaData[metaName]];
-			metaData[metaName].push(metaVal);
+			puzzleAddMeta(puzzle, metaName, metaVal);
 		});
-		if(Object.keys(metaData).length > 0) puzzle.metaData = metaData;
 	};
 	const fpuzzlesParseRC = rc => rc.match(/R([0-9]+)C([0-9]+)/).slice(1, 3).map(Number).map(n => n - 1);
 	const offsetRC = (or, oc) => ([r, c]) => [r + or, c + oc];
@@ -525,6 +533,8 @@ const loadFPuzzle = (() => {
 			puzzleAdd(puzzle, 'cages', {value: `solution: ${solString}`});
 		}
 	};
+	parse.antiknight = (fpuzzle, puzzle) => puzzleAddMeta(puzzle, 'antiknight', fpuzzle.antiknight);
+	parse.antiking = (fpuzzle, puzzle) => puzzleAddMeta(puzzle, 'antiking', fpuzzle.antiking);
 	parse.littlekillersum = (fpuzzle, puzzle) => {
 		(fpuzzle.littlekillersum || []).forEach(part => {
 			let rc = offsetRC(0.5, 0.5)(fpuzzlesParseRC(part.cell));
@@ -572,24 +582,55 @@ const loadFPuzzle = (() => {
 				}, customStyle.arrow));
 			});
 			let cells = part.cells.map(fpuzzlesParseRC).map(offsetRC(0.5, 0.5)), [min, max] = rcMinMax(cells);
-			puzzleAdd(puzzle, 'overlays', Object.assign({
-				borderColor: '#a1a1a1',
-				backgroundColor: '#ffffff',
-				center: getPartCenter(part),
-				fontSize: 16,
-				thickness: 5,
-				rounded: true,
-				text: '',
-				width: 0.65 + (max[1] - min[1]), height: 0.65 + (max[0] - min[0]),
-			}, customStyle.bulb));
+			let bulbStrokeThickness = 5, bulbSize = 0.7;
+			if((max[0] === min[0]) || (max[1] === min[1])) {
+				puzzleAdd(puzzle, 'overlays', Object.assign({
+					borderColor: '#a1a1a1',
+					backgroundColor: '#ffffff',
+					center: getPartCenter(part),
+					fontSize: 16,
+					thickness: bulbStrokeThickness,
+					rounded: true,
+					text: '',
+					width: 0.75 + (max[1] - min[1]), height: 0.75 + (max[0] - min[0]),
+				}, customStyle.bulb));
+			}
+			else {
+				let lineThickness = Math.round(bulbSize * SvgRenderer.CellSize);
+				puzzleAdd(puzzle, 'lines', Object.assign({
+					color: '#a1a1a1', thickness: lineThickness, opacity: 0.7,
+					wayPoints: cells
+				}, customStyle.bulb));
+				puzzleAdd(puzzle, 'lines', Object.assign({
+					color: '#ffffff', thickness: lineThickness - 2 * bulbStrokeThickness, opacity: 0.8,
+					wayPoints: cells
+				}));
+			}
 		});
 	};
 	parse.killercage = (fpuzzle, puzzle) => {
-		(fpuzzle.killercage || []).forEach(cage => puzzleAdd(puzzle, 'cages', {
-			cells: cage.cells.map(fpuzzlesParseRC),
-			value: cage.value,
-			unique: true
-		}));
+		(fpuzzle.killercage || []).forEach(cage => {
+			let pCage = {unique: true};
+			if(Array.isArray(cage.cells)) pCage.cells = cage.cells.map(fpuzzlesParseRC);
+			if(cage.value) pCage.value = cage.value;		
+			if(isIntStrict(cage.value)) pCage.sum = parseInt(cage.value);
+			puzzleAdd(puzzle, 'cages', pCage);
+		});
+	};
+	parse.cage = (fpuzzle, puzzle) => {
+		const reMetaCageValue = /^[a-z]+: /;
+		(fpuzzle.cage || []).forEach(cage => {
+			let cageOpts = Object.assign({}, cage, {cells: cage.cells.map(fpuzzlesParseRC)});
+			if(cageOpts.style === undefined) {
+				switch(cage.fromConstraint) {
+					case 'Row Indexer': cageOpts.style = 'fpRowIndexer'; break;
+					case 'Column Indexer': cageOpts.style = 'fpColumnIndexer'; break;
+					case 'Box Indexer': cageOpts.style = 'fpBoxIndexer'; break;
+				}
+			}
+			if(typeof cage.value === 'string' && cage.value.match(reMetaCageValue)) delete cageOpts.cells;
+			puzzleAdd(puzzle, 'cages', cageOpts);
+		});
 	};
 	parse['diagonal+'] = (fpuzzle, puzzle) => {
 		let cellHeight = puzzle.cells.length, cellWidth = puzzle.cells.reduce((acc, cur) => Math.max(cur.length, acc), 0);
@@ -872,21 +913,6 @@ const loadFPuzzle = (() => {
 					angle: part.angle
 				});
 			}
-		});
-	};
-	parse.cage = (fpuzzle, puzzle) => {
-		const reMetaCageValue = /^[a-z]+: /;
-		(fpuzzle.cage || []).forEach(cage => {
-			let cageOpts = Object.assign({}, cage, {cells: cage.cells.map(fpuzzlesParseRC)});
-			if(cageOpts.style === undefined) {
-				switch(cage.fromConstraint) {
-					case 'Row Indexer': cageOpts.style = 'fpRowIndexer'; break;
-					case 'Column Indexer': cageOpts.style = 'fpColumnIndexer'; break;
-					case 'Box Indexer': cageOpts.style = 'fpBoxIndexer'; break;
-				}
-			}
-			if(typeof cage.value === 'string' && cage.value.match(reMetaCageValue)) delete cageOpts.cells;
-			puzzleAdd(puzzle, 'cages', cageOpts);
 		});
 	};
 	const fixFPuzzleSlashes = data => {

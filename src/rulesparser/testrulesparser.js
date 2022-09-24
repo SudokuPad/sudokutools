@@ -2,8 +2,15 @@ const fsp = require('fs').promises;
 const PuzzleTools = require('../puzzletools_lib.js');
 const PuzzleZipper = require('../puzzlezipper_lib.js');
 global.md5Digest = require('../md5digest.js');
-const {decodeFPuzzleData, parseFPuzzle} = require('../fpuzzlesdecoder.js');
-const {normalizeRules, isAntiKnight, isAntiKing, hasKillerCages} = require('./rulesparser.js');
+const {
+	normalizeRules,
+	hasAntiKnight,
+	hasAntiKing,
+	hasKillerCage,
+	hasXV
+} = require('./rulesparser.js');
+const loadFPuzzle = require('../fpuzzlesdecoder.js');
+const {decodeFPuzzleData, encodeFPuzzleData, parseFPuzzle} = loadFPuzzle;
 
 
 // Loading
@@ -45,30 +52,57 @@ const {normalizeRules, isAntiKnight, isAntiKing, hasKillerCages} = require('./ru
 		let puzzleRules = await extractPuzzleRules(puzzleDbFn);
 		writePuzzleRulesFile(puzzleRules, rulesFn);
 	};
-	const loadFPuzzlesRules = async puzzleFn => {
-		let fpuzzles = await loadJson(puzzleFn);
-		return fpuzzles.map(([title, fpuzzleData, solution]) => {
-			let fpuzzle = decodeFPuzzleData(fpuzzleData);
-			let puzzle = parseFPuzzle(fpuzzleData);
-			let metaData = extractPuzzleMeta(puzzle);
-			let rules = (metaData.rules || []).join('\n');
-			let hasRule = [];
-			if(fpuzzle.antiknight) hasRule.push('antiknight');
-			if(fpuzzle.antiking) hasRule.push('antiking');
-			if(Array.isArray(fpuzzle.killercage) && fpuzzle.killercage.length > 0) hasRule.push('killercages');
-			return {id: title, hasRule, rulestext: rules, fpuzzle};
-		});
+	const fpuzzleToTestData = fpuzzleData => {
+		let fpuzzle = decodeFPuzzleData(fpuzzleData);
+		let puzzle = parseFPuzzle(fpuzzleData);
+		let metaData = extractPuzzleMeta(puzzle);
+		let rules = (metaData.rules || []).join('\n');
+		let hasRule = [];
+		const {antiknight, antiking, killercage, xv} = fpuzzle;
+		['antiknight', 'antiking', 'killercage', 'xv']
+			.forEach(rule =>
+				fpuzzle[rule] === true ||
+				(Array.isArray(fpuzzle[rule]) && fpuzzle[rule].length > 0)
+				? hasRule.push(rule)
+				: null
+			);
+		return {id: `"${fpuzzle.title || ''}" by ${fpuzzle.author || ''}`, hasRule, rulestext: rules, fpuzzle};
 	};
+	const loadTestFPuzzles = async fn => (await loadJson(fn))
+		.map(([title, puzzle, solution]) => puzzle)
+		//.slice(-100)
+		//.filter((p, i, arr) => [1, 14, 22, 25].includes(arr.length - i))
+		.map(fpuzzleToTestData)
+	const loadPuzzleList = async (fn, start = 0, end = Infinity, filterName) => (await loadJson(fn))
+		.filter(({puzzle}) => puzzle !== undefined)
+		.slice(start, end)
+		.map(({puzzle}) => puzzle)
+		.map(fpuzzleToTestData)
+		.filter(p => ![
+			'"Modifier Mystery" by mnasti2',
+			'"Mystery Box" by Nahileon',
+			'"Hot Whispers" by Man lvl 2',
+			'"Oil and Water" by Will Power',
+			'"6x6 wrogn CC" by lerroyy',
+			'"Theseus" by Nordy',
+			'"Chaos Construction : Wrogn" by lerroyy',
+			'"Region Geometry X" by Emre Kolotoğlu',
+			'"Kings and/or Knights" by Scruffamudda', // Missing global constraints
+			].includes(p.id)
+		)
+		.filter(p => filterName === undefined || filterName === p.id);
 	//const decodeFPuzzles = fpuzzleData => PuzzleZipper.zip(JSON.stringify(parseFPuzzle(fpuzzleData)));
 
 // Testing
 	const testRuleCheck = (checkFunc, puzzles, expected) => {
 		let passed = 0;
-		puzzles.forEach(({id, rulestext}, idx) => {
+		puzzles.forEach(({id, rulestext, fpuzzle}, idx) => {
 			let m = checkFunc(rulestext);
 			let ruleMatch = m !== null && m !== false;
 			if(ruleMatch !== expected[idx]) {
-				console.log('\x1b[31m  FAIL: "%s"\x1b[0m [%s] ', id, JSON.stringify((m || [])[0]));
+				console.log('\x1b[31m  FAIL %s: "%s"\x1b[0m [%s] ', expected[idx] ? 'HAS' : 'NOT', id, JSON.stringify((m || [])[0]), idx);
+				console.log(normalizeRules(rulestext));
+				//console.log(encodeFPuzzleData(fpuzzle));
 				return;
 			}
 			passed++;
@@ -79,18 +113,49 @@ const {normalizeRules, isAntiKnight, isAntiKing, hasKillerCages} = require('./ru
 
 // Tests
 	let tests = [
-		{label: 'anti-knight', checkFunc: isAntiKnight, isExpected: ({hasRule = []}) => hasRule.includes('antiknight')},
-		{label: 'anti-king', checkFunc: isAntiKing, isExpected: ({hasRule = []}) => hasRule.includes('antiking')},
-		{label: 'killercages', checkFunc: hasKillerCages, isExpected: ({hasRule = []}) => hasRule.includes('killercages')},
+		{label: 'anti-knight', checkFunc: hasAntiKnight, isExpected: ({hasRule = []}) => hasRule.includes('antiknight')},
+		{label: 'anti-king', checkFunc: hasAntiKing, isExpected: ({hasRule = []}) => hasRule.includes('antiking')},
+		{label: 'killercage', checkFunc: hasKillerCage, isExpected: ({hasRule = []}) => hasRule.includes('killercage')},
+		{label: 'xv', checkFunc: hasXV, isExpected: ({hasRule = []}) => hasRule.includes('xv')},
 	];
+
+// Test Data
+	const loadPuzzleRules_json = async testData => {
+		fn = './src/rulesparser/puzzlerules.json';
+		console.time(`loadJson(${JSON.stringify(fn)})`);
+		testData.push(...await loadJson(fn));
+		console.timeEnd(`loadJson(${JSON.stringify(fn)})`);
+		console.log('testData.length:', testData.length);
+	};
+	const testfpuzzles_json = async testData => {
+		fn = './src/rulesparser/testfpuzzles.json';
+		console.time(`loadTestFPuzzles(${JSON.stringify(fn)})`);
+		testData.push(...await loadTestFPuzzles(fn));
+		console.timeEnd(`loadTestFPuzzles(${JSON.stringify(fn)})`);
+		console.log('testData.length:', testData.length);
+	};
+	const puzzlelist_json = async testData => {
+		fn = '../sudokudata/lmgfetch/puzzlelist.json';
+		console.time(`loadPuzzleList(${JSON.stringify(fn)})`);
+		testData.push(...await loadPuzzleList(fn, 0, 1000));
+		console.timeEnd(`loadPuzzleList(${JSON.stringify(fn)})`);
+		console.log('testData.length:', testData.length);
+	};
 
 (async () => {
 
-	let testData = [
-		...await loadJson('./src/rulesparser/puzzlerules.json'),
-		...await loadFPuzzlesRules('./src/rulesparser/testfpuzzles.json')
-	];
+	
+	loadFPuzzle.logging = false;
+	let testData = [], fn;
 
+	let t0 = Date.now();
+	console.time(`Load testData`);
+	await loadPuzzleRules_json(testData);
+	await testfpuzzles_json(testData);
+	//await puzzlelist_json(testData);
+	console.timeEnd(`Load testData`);
+
+	console.time(`Run tests`);
 	tests
 		.forEach(({label, checkFunc, isExpected}) => {
 			console.log('Testing %s rule (Expected pass %s of %s)', label,
@@ -100,5 +165,6 @@ const {normalizeRules, isAntiKnight, isAntiKing, hasKillerCages} = require('./ru
 			let passed = testRuleCheck(checkFunc, testData, testData.map(isExpected));
 			console.log('\n  Passed %s of %s\n', passed, testData.length);
 		});
-	
+	console.timeEnd(`Run tests`);
+
 })();
