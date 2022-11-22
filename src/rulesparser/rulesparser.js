@@ -15,6 +15,7 @@ const RulesParser = (() => {
 		.replace(/ +/gm, ' ')
 		.replace(/:\./gm, ':')
 		.replace(/^\s*[-*]*\s*|\s*$/, '');
+	const makeReHasRuleTester = reHasRule => rules => (normalizeRules(rules).match(reHasRule) || [])[1];
 
 // Helper RegExs
 	const reCan = '(may|must|can)';
@@ -51,9 +52,9 @@ const RulesParser = (() => {
 		`${reCells} ${reThatAre} ${reChess}${move}${reSMove} ${reApart} ${reCannot} ${reContain}`,
 	].join('|')})${reRuleEnd}`, 'i');
 	const reRuleAntiKnight = reRuleAntiChess('knight');
-	const hasAntiKnight = rules => normalizeRules(rules).match(reRuleAntiKnight);
 	const reRuleAntiKing = reRuleAntiChess('king');
-	const hasAntiKing = rules => normalizeRules(rules).match(reRuleAntiKing);
+	const hasAntiKnight = makeReHasRuleTester(reRuleAntiKnight);
+	const hasAntiKing = makeReHasRuleTester(reRuleAntiKing);
 
 // killer cages
 	const reGiven = '(small|given|provided)';
@@ -75,7 +76,7 @@ const RulesParser = (() => {
 		`${reDigitsInCage} ${reNoRepeat},? and ${reMustSum} ${reGivenValue}( (${reIndicated}|${reCageCorner}))?`,
 		`${reNoRepeatInCage}(, which show their sums?)?`,
 		].join('|')})${reRuleEnd}`, 'i');
-	const hasKillerCage = rules => normalizeRules(rules).match(reHasKillerCage);
+	const hasKillerCage = makeReHasRuleTester(reHasKillerCage);
 
 // XV
 	const reStandardXV = `((standard|normal) )?(V|X|XV|X\\/V|XVXV)( pairs)?( rules apply)?`;
@@ -114,7 +115,7 @@ const RulesParser = (() => {
 		`${reXVPhrases} Cells NOT separated by an X or V must NOT sum to 10 or 5`,
 		`${reXVPhrases} AND belong to two separate pentominoes\\. ${reXVNoNeg}`, // NOT 100%
 		].join('|')})${reRuleEnd}`, 'im');
-	const hasXV = rules => normalizeRules(rules).match(reHasXV);
+	const hasXV = makeReHasRuleTester(reHasXV);
 
 	return {
 		normalizeRules,
