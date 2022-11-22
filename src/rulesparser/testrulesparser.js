@@ -98,7 +98,7 @@ const {decodeFPuzzleData, encodeFPuzzleData, parseFPuzzle} = loadFPuzzle;
 		let passed = 0;
 		puzzles.forEach(({id, rulestext, fpuzzle}, idx) => {
 			let m = checkFunc(rulestext);
-			let ruleMatch = m !== null && m !== false;
+			let ruleMatch = Array.isArray(m) && m.length > 0;
 			if(ruleMatch !== expected[idx]) {
 				console.log('\x1b[31m  FAIL %s: "%s"\x1b[0m [%s] ', expected[idx] ? 'HAS' : 'NOT', id, JSON.stringify((m || [])[0]), idx);
 				console.log(normalizeRules(rulestext));
@@ -106,7 +106,9 @@ const {decodeFPuzzleData, encodeFPuzzleData, parseFPuzzle} = loadFPuzzle;
 				return;
 			}
 			passed++;
-			if(ruleMatch) console.log('  \x1b[32mPASS\x1b[0m [%s] match:', id, JSON.stringify(m[0]));
+			if(ruleMatch) {
+				console.log('  \x1b[32mPASS\x1b[0m [%s] match:', id, JSON.stringify((m || [])[0]));
+			}
 		});
 		return passed;
 	};
@@ -152,7 +154,7 @@ const {decodeFPuzzleData, encodeFPuzzleData, parseFPuzzle} = loadFPuzzle;
 	console.time(`Load testData`);
 	await loadPuzzleRules_json(testData);
 	await testfpuzzles_json(testData);
-	//await puzzlelist_json(testData);
+	await puzzlelist_json(testData);
 	console.timeEnd(`Load testData`);
 
 	console.time(`Run tests`);
