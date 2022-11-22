@@ -977,7 +977,7 @@ const loadFPuzzle = (() => {
 		[...layerOrder, ...Object.keys(fpuzzle).filter(feature => !layerOrder.includes(feature))]
 			.filter(feature => fpuzzle[feature] !== undefined)
 			.forEach(feature => {
-				if(typeof parse[feature] !== 'function') return console.error('Unsupported feature:', feature, fpuzzle[feature]);
+				if(typeof parse[feature] !== 'function') return loadPuzzle.logUnsupported ? console.error('Unsupported feature:', feature, fpuzzle[feature]) : null;
 				parse[feature](fpuzzle, puzzle);
 			});
 		applyDefaultMeta(fpuzzle, puzzle, 'title', loadPuzzle.getDefaultTitle);
@@ -1022,6 +1022,7 @@ const loadFPuzzle = (() => {
 	const fpuzzleAddSolution = (fpuzzleData, solution) => encodeFPuzzleData(Object.assign(decodeFPuzzleData(fpuzzleData), {solution}));
 
 
+	loadPuzzle.logUnsupported = false;
 	loadPuzzle.fetchRawId = fetchRawId;
 	loadPuzzle.parseFPuzzle = parseFPuzzle;
 	loadPuzzle.decompressPuzzle = base64Codec.decompress;
