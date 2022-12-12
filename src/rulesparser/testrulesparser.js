@@ -98,7 +98,7 @@ const {decodeFPuzzleData, encodeFPuzzleData, parseFPuzzle} = loadFPuzzle;
 		let passed = 0;
 		puzzles.forEach(({id, rulestext, fpuzzle}, idx) => {
 			let m = checkFunc(rulestext);
-			let ruleMatch = Array.isArray(m) && m.length > 0;
+			let ruleMatch = Array.isArray(m) && m.length > 0 || false;
 			if(ruleMatch !== expected[idx]) {
 				console.log('\x1b[31m  FAIL %s: "%s"\x1b[0m [%s] ', expected[idx] ? 'HAS' : 'NOT', id, JSON.stringify((m || [])[0]), idx);
 				console.log(normalizeRules(rulestext));
