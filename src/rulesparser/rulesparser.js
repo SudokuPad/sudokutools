@@ -15,7 +15,7 @@ const RulesParser = (() => {
 		.replace(/ +/gm, ' ')
 		.replace(/:\./gm, ':')
 		.replace(/^\s*[-*]*\s*|\s*$/, '');
-	const makeReHasRuleTester = reHasRule => rules => (normalizeRules(rules).match(reHasRule) || [])[1];
+	const makeReHasRuleTester = reHasRule => rules => (normalizeRules(rules).match(reHasRule) || [])[0];
 
 // Helper RegExs
 	const reCan = '(may|must|can)';
@@ -34,7 +34,7 @@ const RulesParser = (() => {
 
 // anti-king, anti-knight
 	const reCannotAppear = `${reCannot} (be( either)?|appear|repeat|${reSeeValue})( (${reThatAre}|in (any )?cells))?`;
-	const reAnti = `(${reNormal} )?anti-?`;
+	const reAnti = `((${reNormal} )?anti-?)?`;
 	const reConstraint = ' ?(rules?|constraint)?( appl(y|ies))?';
 	const reInChess = `\\(?in chess\\)?`;
 	const reApart = `(apart|away|((apart|away) )?(of|from) each other|\\(touching each other diagonally\\))( ${reInChess})?`;
@@ -46,6 +46,7 @@ const RulesParser = (() => {
 	const reRuleAntiChess = move => new RegExp(`${reRuleStart}(${[
 		`${reChessShortRule(move)}`,
 		`${reChessShortRule(move)}: ${reCells} ${reSeparated} ${reChess}${move}${reSMove} ${reCan} ${reContain}`,
+		`${reChessShortRule(move)}: ${reCells} ${reSeparated} ${reChess}${move}${reSMove} ${reMustBeDifferent}`,
 		`${reChessShortRule(move)}: ${reCells} ${reThatAre} ${reChess}${move}${reSMove} ${reApart} ${reMustBeDifferent}`,
 		`${reCells} ${reCannotAppear} ${reChess}${move}${reSMove} ${reApart}( ${reKingCannotTouch})?`,
 		`${reCells} ${reSeparated} ${reChess}${move}${reSMove} ${reCannot} ${reContain}`,
