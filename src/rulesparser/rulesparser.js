@@ -15,22 +15,23 @@ const RulesParser = (() => {
 			.replace(/ +/gm, ' ')
 			.replace(/:\./gm, ':')
 			.replace(/^\s*[-*]*\s*|\s*$/, '');
-		const makeReHasRuleTester = reHasRule => rules => (normalizeRules(rules).match(reHasRule) || [])[0];
+		const makeReHasRuleTester = reHasRule => rules => (normalizeRules(rules).match(reHasRule) || [])[1];
 
 	// Helper RegExs
+		const reRuleStart = `(?:^|[.]|,|,?\\s*and)\\s*(?:[-*1-9❶-❾+]+\.?)?\\s*`;
+		const reRuleEnd = `([.]|$| - )`;
 		const reCan = '(may|must|can)';
 		const reCannot = `(((${reCan}) ?)not|can\'t)`;
 		const reShortRule = '(normal sudoku|killer cages?|little killers?|odds?|evens?)';
-		const reRuleStart = `([.]?|^)\s*([-*1-9❶-❾]+\.?)?\s*`;
-		const reRuleEnd = `([.]|$| - )`;
 		const reValue = `(the )?(clue|digit|value|number|cell|square|total)s?`;
 		const reCells = `(the )?(((any|no) )?two )?((identical|neighboring|adjacent|pairs of) )?(${reValue}s|those)( in ((adjacent|a) )?cells?)?`;
 		const reSeeValue = `see (the same ${reValue}|each other)`;
 		const reSeparated = `(which )?(always )?(sep[ae]rated|connected|joined|that share an edge|marked|${reSeeValue})(\\.? (by|with))?`;
 		const reThatAre = '(that are|a|within)';
 		const reNormal = `(standard|normal|regular|usual)`;
-		const reDifferent = `different`;
-		const reMustBeDifferent = `${reCan} be different`;
+		const reDifferent = `(be )?different`;
+		const reContain = `((contain|have|be) the same ${reValue}|repeat)`;
+		const reMustBeDifferent = `(${reCan} ${reDifferent}|${reCannot} ${reContain})`;
 
 	// anti-king, anti-knight
 		const reCannotAppear = `${reCannot} (be( either)?|appear|repeat|${reSeeValue})( (${reThatAre}|in (any )?cells))?`;
@@ -38,9 +39,8 @@ const RulesParser = (() => {
 		const reConstraint = ' ?(rules?|constraint)?( appl(y|ies))?';
 		const reInChess = `\\(?in chess\\)?`;
 		const reApart = `(apart|away|((apart|away) )?(of|from) each other|\\(touching each other diagonally\\))( ${reInChess})?`;
-		const reContain = `(contain|have|be) the same ${reValue}`;
 		const reChess = `(.+? or )?(${reThatAre} )?(a )?([(]?chess[)]? )?`;
-		const reSMove = `(\'?s)?([- ]move)?( or .+?)?( ${reInChess})?`;
+		const reSMove = `(\'?s)?([- ]move)?( or [^.]+?)?( ${reInChess})?`;
 		const reKingCannotTouch = `[(]i[.]e[.] cannot touch diagonally[)]`;
 		const reChessShortRule = move => `${reAnti}${reChess}${move}${reSMove}( and [^.:]+ )?${reConstraint}`;
 		const reRuleAntiChess = move => new RegExp(`${reRuleStart}(${[

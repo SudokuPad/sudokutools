@@ -70,7 +70,6 @@ const {decodeFPuzzleData, encodeFPuzzleData, parseFPuzzle} = loadFPuzzle;
 	};
 	const loadTestFPuzzles = async fn => (await loadJson(fn))
 		.map(([title, puzzle, solution]) => puzzle)
-		//.slice(-100)
 		//.filter((p, i, arr) => [1, 14, 22, 25].includes(arr.length - i))
 		.map(fpuzzleToTestData)
 	const loadPuzzleList = async (fn, start = 0, end = Infinity, filterName) => (await loadJson(fn))
@@ -98,16 +97,16 @@ const {decodeFPuzzleData, encodeFPuzzleData, parseFPuzzle} = loadFPuzzle;
 		let passed = 0;
 		puzzles.forEach(({id, rulestext, fpuzzle}, idx) => {
 			let m = checkFunc(rulestext);
-			let ruleMatch = Array.isArray(m) && m.length > 0 || false;
+			let ruleMatch = m !== undefined;
 			if(ruleMatch !== expected[idx]) {
-				console.log('\x1b[31m  FAIL %s: "%s"\x1b[0m [%s] ', expected[idx] ? 'HAS' : 'NOT', id, JSON.stringify((m || [])[0]), idx);
+				console.log('\x1b[31m  FAIL %s: "%s"\x1b[0m [%s] ', expected[idx] ? 'HAS' : 'NOT', id, m, idx);
 				console.log(normalizeRules(rulestext));
 				//console.log(encodeFPuzzleData(fpuzzle));
 				return;
 			}
 			passed++;
 			if(ruleMatch) {
-				console.log('  \x1b[32mPASS\x1b[0m [%s] match:', id, JSON.stringify((m || [])[0]));
+				console.log('  \x1b[32mPASS\x1b[0m [%s] match:', id, m);
 			}
 		});
 		return passed;
