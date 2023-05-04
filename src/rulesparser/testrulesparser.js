@@ -101,7 +101,6 @@ const {decodeFPuzzleData, encodeFPuzzleData, parseFPuzzle} = loadFPuzzle;
 			if(ruleMatch !== expected[idx]) {
 				console.log('\x1b[31m  FAIL %s: "%s"\x1b[0m [%s] ', expected[idx] ? 'HAS' : 'NOT', id, m, idx);
 				console.log(normalizeRules(rulestext));
-				//console.log(encodeFPuzzleData(fpuzzle));
 				return;
 			}
 			passed++;
