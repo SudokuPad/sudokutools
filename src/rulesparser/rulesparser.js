@@ -42,7 +42,7 @@ const RulesParser = (() => {
 		const reChess = `(.+? or )?(${reThatAre} )?(a )?([(]?chess[)]? )?`;
 		const reSMove = `(\'?s)?([- ]move)?( or [^.]+?)?( ${reInChess})?`;
 		const reKingCannotTouch = `[(]i[.]e[.] cannot touch diagonally[)]`;
-		const reChessShortRule = move => `${reAnti}${reChess}${move}${reSMove}( and [^.:]+ )?${reConstraint}`;
+		const reChessShortRule = move => `${reAnti}${reChess}${move}(?<![a-z])${reSMove}( and [^.:]+ )?${reConstraint}`;
 		const reRuleAntiChess = move => new RegExp(`${reRuleStart}(${[
 			`${reChessShortRule(move)}`,
 			`${reChessShortRule(move)}: ${reCells} ${reSeparated} ${reChess}${move}${reSMove} ${reCan} ${reContain}`,
