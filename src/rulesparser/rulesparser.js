@@ -58,20 +58,22 @@ const RulesParser = (() => {
 
 	// anti-king, anti-knight
 		const reCannotAppear = `${reCannot} (?:be(?: either)?|appear|repeat|${reSeeValue})(?: (?:${reThatAre}|in (?:any )?cells))?`;
-		const reAnti = `(?:(?:${reNormal} )?anti-?)?`;
+		const reAnti = `(?:(?:(?:${reNormal} )?anti-?)|(?<=\\W))`;
 		const reConstraint = ' ?(?:rules?|constraint)?(?: appl(y|ies))?';
 		const reInChess = `\\(?in chess\\)?`;
-		const reApart = `(?:apart|away|((apart|away) )?(?:of|from) each other|\\(?:touching each other diagonally\\))(?: ${reInChess})?`;
+		const reApart = `(?:apart|away|((apart|away) )?(?:of|from) each other|\\(touching each other diagonally\\))(?: ${reInChess})?`;
 		const reChess = `(?:.+? or )?(?:${reThatAre} )?(?:a )?(?:[(]?chess[)]? )?`;
 		const reSMove = `(?:\'?s)?(?:[- ]move)?(?: or [^.]+?)?(?: ${reInChess})?`;
 		const reKingCannotTouch = `[(]i[.]e[.] cannot touch diagonally[)]`;
+		const reNegativePrefix = `(?<!(least|camel)[^].*)`;
 		const reChessShortRule = move => `${reAnti}${reChess}${move}${reSMove}(?: and [^.:]+ )?${reConstraint}`;
 		const reRuleAntiChessParts = move => [
-			`${reChessShortRule(move)}`,
+			`${reNegativePrefix}${reChessShortRule(move)}`,
 			`${reChessShortRule(move)}: ${reCells} ${reSeparated} ${reChess}${move}${reSMove} ${reCan} ${reContain}`,
 			`${reChessShortRule(move)}: ${reCells} ${reSeparated} ${reChess}${move}${reSMove} ${reMustBeDifferent}`,
 			`${reChessShortRule(move)}: ${reCells} ${reThatAre} ${reChess}${move}${reSMove} ${reApart} ${reMustBeDifferent}`,
 			`${reCells} ${reCannotAppear} ${reChess}${move}${reSMove} ${reApart}(?: ${reKingCannotTouch})?`,
+			`${reCells} ${reCannotAppear} ${reChess}${move}${reSMove} ${reApart}`,
 			`${reCells} ${reSeparated} ${reChess}${move}${reSMove} ${reCannot} ${reContain}`,
 			`${reCells} ${reThatAre} ${reChess}${move}${reSMove} ${reApart} ${reCannot} ${reContain}`,
 		];
@@ -83,7 +85,7 @@ const RulesParser = (() => {
 
 	// killer cages
 		const reGiven = '(?:small|given|provided)';
-		const reOptional = `\\(?:if ${reGiven}\\)`;
+		const reOptional = `\\(if ${reGiven}\\)`;
 		const reKillerRule = '(?:standard )?killer(?: rule applies)?';
 		const reKillerCage = '(?:(?:a|the|each) )?(?:killer )?cages?';
 		const reDigitsInCage = `(?:${reValue} in ${reKillerCage}|in ${reKillerCage}, ${reValue})`;
